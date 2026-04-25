@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=yes">
+    <title>WT权限站</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --spring-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --bg: #f5f5f7;
+            --surface: #ffffff;
+            --border: #e2e2e6;
+            --border-light: #eef0f4;
+            --text: #1c1b1f;
+            --text2: #4a4852;
+            --text3: #8e8c95;
+            --shadow-card: 0 1px 4px rgba(0,0,0,0.03);
+            --critical-bg: #fff5f5;
+            --high-bg: #fffaf0;
+            --medium-bg: #fffff0;
+            --low-bg: #f0f7ff;
+            --minimal-bg: #f0fff4;
+            --tab-active-bg: #ffffff;
+            --tab-hover-bg: #f1f4f9;
+            --btn-bg: #f1f3f6;
+            --btn-hover-bg: #e4e7ed;
+            --btn-text: #1c1b1f;
+            --auth-btn-bg: #edf2f7;
+            --overlay-bg: rgba(0,0,0,0.4);
+            --track-bg: #fafbfc;
+            --modal-bg: #ffffff;
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+            --font-sans: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            --radius: 14px;
+            --radius-sm: 12px;
+            --radius-xs: 10px;
+            --btn-radius: 10px;
+            transition: background-color 0.25s, color 0.25s, border-color 0.25s;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #121217;
+                --surface: #1c1b20;
+                --border: #2f2e38;
+                --border-light: #2a2932;
+                --text: #e6e1e5;
+                --text2: #c7c2cd;
+                --text3: #9e9aa8;
+                --critical-bg: #000000;
+                --high-bg: #1f1a14;
+                --medium-bg: #1f1e14;
+                --low-bg: #000000;
+                --minimal-bg: #141f18;
+                --tab-active-bg: #1c1b20;
+                --tab-hover-bg: #24232b;
+                --btn-bg: #2a2932;
+                --btn-hover-bg: #33323d;
+                --btn-text: #e6e1e5;
+                --auth-btn-bg: #2a2932;
+                --overlay-bg: rgba(0,0,0,0.6);
+                --track-bg: #1a1920;
+                --modal-bg: #1c1b20;
+            }
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+            word-break: break-word;
+            -webkit-overflow-scrolling: touch;
+        }
+        body.modal-open { overflow: hidden; }
+
+        .site-header {
+            text-align: center;
+            padding: 24px 16px 8px;
+        }
+        .site-header h1 { font-size: clamp(1.3rem,5vw,1.7rem); font-weight:700; }
+        .site-header .subtitle { font-size:0.85rem; color:var(--text3); margin-bottom:8px; }
+        .site-header .disclaimer { font-size:0.7rem; color:var(--text3); max-width:800px; margin:0 auto; line-height:1.5; }
+        .disclaimer strong { color:var(--text2); }
+
+        .navbar {
+            position:sticky; top:0; z-index:50;
+            background:var(--surface);
+            border-bottom:1px solid var(--border);
+            padding:6px 4px;
+            display:flex;
+            backdrop-filter:blur(10px);
+            -webkit-backdrop-filter:blur(10px);
+            box-shadow:0 1px 3px rgba(0,0,0,0.04);
+            overflow-x:auto;
+            -webkit-overflow-scrolling:touch;
+        }
+        .nav-tabs { display:flex; flex-wrap:nowrap; gap:2px; margin:0 auto; }
+        .nav-tab {
+            flex-shrink:0;
+            padding:7px 12px;
+            border-radius:var(--btn-radius);
+            font-size:0.75rem; font-weight:600;
+            cursor:pointer;
+            transition:all 0.2s var(--spring-easing);
+            color:var(--text2);
+            background:transparent;
+            border:1px solid transparent;
+            white-space:nowrap;
+            user-select:none;
+            display:flex; align-items:center; gap:4px;
+        }
+        .nav-tab:hover { background:var(--tab-hover-bg); color:var(--text); }
+        .nav-tab.active {
+            background:var(--tab-active-bg);
+            color:var(--text);
+            border-color:var(--border);
+            font-weight:700;
+        }
+        .nav-tab .tab-icon { font-size:0.8rem; }
+
+        .page-wrapper {
+            flex:1;
+            display:flex;
+            flex-direction:column;
+            transition:background-color 0.35s;
+        }
+        .page-wrapper.critical-bg { background-color:var(--critical-bg); }
+        .page-wrapper.high-bg { background-color:var(--high-bg); }
+        .page-wrapper.medium-bg { background-color:var(--medium-bg); }
+        .page-wrapper.low-bg { background-color:var(--low-bg); }
+        .page-wrapper.minimal-bg { background-color:var(--minimal-bg); }
+
+        .page-container {
+            max-width:1060px;
+            width:100%;
+            margin:0 auto;
+            padding:16px 12px 30px;
+            flex:1;
+            min-height: 80vh; /* 防止切换时高度塌陷 */
+        }
+        .page {
+            display:none;
+            opacity:0;
+            transform: translateY(12px);
+            transition: opacity 0.35s var(--spring-easing), transform 0.35s var(--spring-easing);
+            pointer-events: none;
+        }
+        .page.active {
+            display:block;
+            opacity:1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .cards-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:10px; margin-bottom:20px; }
+        .info-card {
+            background:var(--surface);
+            border:1px solid var(--border-light);
+            border-radius:var(--radius-sm);
+            padding:14px 16px;
+            box-shadow:var(--shadow-card);
+            word-break:break-word;
+            min-width:0;
+        }
+        .card-label {
+            font-size:0.65rem;
+            text-transform:uppercase;
+            letter-spacing:0.4px;
+            color:var(--text3);
+            font-weight:650;
+            margin-bottom:6px;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            gap:4px;
+            width:max-content;
+        }
+        .card-label i { font-size:0.8rem; width:16px; text-align:center; }
+        .card-label:hover { color:#00668B; text-decoration:underline; }
+        .card-value {
+            font-family:var(--font-mono);
+            font-size:0.75rem;
+            color:var(--text);
+            line-height:1.5;
+            white-space:pre-wrap;
+            overflow-wrap:break-word;
+            max-height:150px;
+            overflow-y:auto;
+            display:flex;
+            align-items:center;
+            gap:6px;
+        }
+        .track-card { grid-column:1/-1; background:var(--track-bg); }
+
+        .hourglass-loader {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            animation: spinHourglass 2s infinite ease-in-out;
+        }
+        @keyframes spinHourglass {
+            0% { transform: rotate(0deg); }
+            45% { transform: rotate(180deg); }
+            55% { transform: rotate(180deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .permission-section { margin-top:8px; padding-top:18px; border-top:2px dashed var(--border); }
+        .permission-section-header { font-weight:700; font-size:0.9rem; margin-bottom:12px; color:var(--text2); display:flex; align-items:center; gap:6px; }
+        .auth-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:10px; }
+        .auth-card {
+            background:var(--surface);
+            border:1px solid var(--border-light);
+            border-radius:var(--radius-sm);
+            padding:14px 16px;
+            box-shadow:var(--shadow-card);
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:8px;
+        }
+        .auth-name {
+            font-weight:600;
+            font-size:0.8rem;
+            cursor:pointer;
+            color:var(--text);
+            display:inline-block;
+            width:max-content;
+            transition:color 0.2s;
+        }
+        .auth-name i { margin-right:4px; }
+        .auth-name:hover { color:#00668B; text-decoration:underline; }
+        .auth-status { font-size:0.68rem; color:var(--text3); }
+        .auth-btn {
+            padding:6px 14px;
+            border-radius:var(--btn-radius);
+            font-size:0.7rem; font-weight:600;
+            border:1px solid var(--border);
+            background:var(--auth-btn-bg);
+            color:var(--btn-text);
+            cursor:pointer;
+            white-space:nowrap;
+            flex-shrink:0;
+            transition:all 0.2s;
+        }
+        .auth-btn:disabled { opacity:0.55; cursor:not-allowed; }
+        .auth-btn.hidden { display:none; }
+        .auth-btn.granted { background:#c6f6d5; border-color:#38a169; color:#22543d; }
+        .auth-btn.denied { background:#fed7d7; border-color:#e53e3e; color:#742a2a; }
+        @media (prefers-color-scheme: dark) {
+            .auth-btn.granted { background:#1a3a2a; color:#7ae0a0; }
+            .auth-btn.denied { background:#3a1a1a; color:#fca5a5; }
+        }
+
+        .hidden { display:none !important; }
+
+        .modal-overlay {
+            position:fixed; top:0; left:0; width:100%; height:100%;
+            backdrop-filter:blur(6px); background:rgba(0,0,0,0.3);
+            opacity:0; visibility:hidden; transition:0.25s;
+            display:flex; align-items:center; justify-content:center; z-index:100;
+        }
+        .modal-overlay.show { opacity:1; visibility:visible; }
+        .modal-card {
+            background:var(--modal-bg);
+            border-radius:var(--radius);
+            padding:24px;
+            max-width:360px;
+            width:90%;
+            transform:scale(0.9);
+            transition:0.3s var(--spring-easing);
+            border:1px solid var(--border);
+            position:relative;
+        }
+        .modal-overlay.show .modal-card { transform:scale(1); }
+        .modal-close-x {
+            position:absolute;
+            top:12px;
+            right:16px;
+            font-size:1.4rem;
+            cursor:pointer;
+            color:var(--text3);
+            line-height:1;
+            transition:color 0.2s;
+        }
+        .modal-close-x:hover { color:var(--text); }
+        .modal-card h3 { font-size:1rem; margin-bottom:12px; }
+        .modal-card p { font-size:0.8rem; line-height:1.6; color:var(--text2); }
+
+        .repo-link-btn {
+            display:inline-block;
+            padding:8px 18px;
+            border-radius:var(--btn-radius);
+            font-size:0.75rem;
+            font-weight:600;
+            border:1px solid var(--border);
+            background:var(--btn-bg);
+            color:var(--btn-text);
+            text-decoration:none;
+            transition:all 0.2s;
+            margin-top:8px;
+        }
+        .repo-link-btn:hover { background:var(--btn-hover-bg); border-color:#8a95aa; }
+
+        footer {
+            text-align:center;
+            padding:16px 12px;
+            font-size:0.7rem;
+            color:var(--text3);
+        }
+
+        @media (max-width:640px) {
+            .cards-grid, .auth-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <h1><i class="fa-solid fa-shield-halved"></i> WT权限站</h1>
+        <p class="subtitle">一个测试可以获取到用户的权限的网站</p>
+        <div class="disclaimer">
+            ⚠️ 所有检测均在本机浏览器完成，除公网IP查询需调用公开API外，不会将任何数据发送到外部服务器。不建议在本站内<strong>截图</strong>或公开访问，以免泄露隐私。
+        </div>
+    </header>
+
+    <nav class="navbar" id="navbar">
+        <div class="nav-tabs" id="navTabs">
+            <button class="nav-tab active" data-page="critical"><i class="fa-solid fa-circle tab-icon" style="color:#c53030;"></i> 极高敏感</button>
+            <button class="nav-tab" data-page="high"><i class="fa-solid fa-circle tab-icon" style="color:#dd6b20;"></i> 高敏感</button>
+            <button class="nav-tab" data-page="medium"><i class="fa-solid fa-circle tab-icon" style="color:#d69e2e;"></i> 中等敏感</button>
+            <button class="nav-tab" data-page="low"><i class="fa-solid fa-circle tab-icon" style="color:#3182ce;"></i> 低敏感</button>
+            <button class="nav-tab" data-page="minimal"><i class="fa-solid fa-circle tab-icon" style="color:#38a169;"></i> 极低敏感</button>
+        </div>
+    </nav>
+
+    <div class="page-wrapper critical-bg" id="pageWrapper">
+        <div class="page-container" id="pageContainer"></div>
+        <div style="text-align:center; padding-bottom:20px;">
+            <a href="https://lxj13533251583.github.io/ldy/" class="repo-link-btn" target="_blank"><i class="fa-solid fa-code-fork"></i> 访问源仓库</a>
+        </div>
+        <footer>
+            <div>© <span id="current-year"></span> 旅冬亦 版权所有</div>
+        </footer>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-card">
+            <span class="modal-close-x" id="modalCloseX">&times;</span>
+            <h3 id="modalTitle"></h3>
+            <p id="modalDescription"></p>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const pages = ['critical','high','medium','low','minimal'];
+            let currentPage = 'critical';
+            const pageContainer = document.getElementById('pageContainer');
+            const navTabs = document.getElementById('navTabs');
+            const pageWrapper = document.getElementById('pageWrapper');
+
+            const explanations = {
+                'ip': '公网IP是您设备在互联网上的唯一地址，就像门牌号一样。任何网站都能看到您的IP，从而知道您的大概地理位置和网络运营商。',
+                'isp': '您的互联网服务提供商，比如中国电信、中国联通等。通过IP可以轻松查出来。',
+                'location': '基于IP地址推测的城市范围，精度有限，通常只能到城市级别。',
+                'webgl': 'WebGL是浏览器用来调用显卡进行3D渲染的技术。通过它可以获得您的显卡型号和驱动信息，这些信息非常独特，经常被用来跟踪用户。',
+                'canvas': '浏览器画布指纹：通过让浏览器在画布上绘制隐藏的文字和图形，不同设备的微小差异会产生独一无二的图片，从而生成一个哈希值来识别您。',
+                'audio': '音频指纹：利用音频处理硬件和软件的细微差别生成的标识符，即使您清除了Cookie，这个指纹也不会消失。',
+                'battery': '电池状态：网页可以读取您设备的电量百分比、是否在充电等信息，这些看似无害的数据可以结合起来追踪用户。',
+                'cores': '您的设备有多少个逻辑处理器核心，反映了设备的性能水平。',
+                'gpu': '显卡的型号信息，和WebGL信息类似，用于设备指纹和性能检测。',
+                'fonts': '浏览器能检测到您系统中安装了哪些字体。不同设备安装的字体组合往往不同，可以用于识别用户。',
+                'plugins': '您浏览器中安装的插件列表，比如PDF阅读器等，插件组合也具有唯一性。',
+                'fingerprint': '设备综合指纹：将上述多种信息（屏幕分辨率、UA、字体、WebGL等）组合在一起，生成一个接近唯一的标识符，能跨站点追踪您。',
+                'cookie': '当前网站保存在您浏览器中的Cookie，常用于保持登录状态和追踪您的行为。',
+                'ls': '本地存储（LocalStorage）：网站可以长时间保存数据在您的浏览器中，即使关闭页面再打开也还在。',
+                'ss': '会话存储（SessionStorage）：和本地存储类似，但关闭浏览器标签页后数据就没了。',
+                'idb': 'IndexedDB：浏览器内置的较大型数据库，网站可以在里面存放大量结构化数据。',
+                'ref': '当前页面是从哪个URL跳转过来的，这能告诉目标网站您上一刻在浏览什么。',
+                'hist': '当前标签页的历史记录条目数量，可以大致推断您的浏览深度。',
+                'vis': '页面是否处于前台可见状态。当您切换到其他标签页时，网站会立即知晓。',
+                'idle': '您最后一次与页面交互（移动鼠标、点击、按键）的时间，网站可以推断您是否正在活跃使用。',
+                'time': '您设备上的当前精确时间，可以知道您所在的时区和时间习惯。',
+                'cpu': '逻辑处理器核心数量，同硬件并发信息。',
+                'mem': '设备内存容量（以GB为单位），用于评估设备性能。',
+                'rtt': '网络往返延迟：表示数据从您的设备到服务器再返回需要的时间，反映网络的实时质量。',
+                'downlink': '下行带宽估算值，网站可以据此调整视频清晰度等。',
+                'ect': '有效网络连接类型，比如4g、3g、wifi等，帮助网站了解您当前的网络环境。',
+                'dns': 'DNS解析时间：将域名转换成IP地址所用的时间，是网络性能的一部分。',
+                'tcp': 'TCP连接耗时：浏览器与服务器建立连接所需的时间。',
+                'tls': 'HTTPS安全握手耗时：建立加密连接花费的时间。',
+                'nav': '从开始导航到页面完全加载的总耗时。',
+                'res': '页面加载过程中请求的图片、脚本、样式等资源的数量和大小。',
+                'nettype': '底层网络连接类型（如wifi、蜂窝数据、以太网），能区分您是用流量还是宽带。',
+                'savedata': '是否开启了浏览器的省流量模式，开启后网站可能会提供简化内容。',
+                'dlbw': '预估的下行带宽，同downlink。',
+                'upspeed': '通过实际上传数据测量得到的上行速度，比估算值更准确。',
+                'ua': '用户代理字符串：包含您的浏览器品牌、版本、操作系统类型等详细信息，是网站识别设备最常见的方式。',
+                'plat': '操作系统平台，如Windows、Mac、Linux等。',
+                'bver': '您当前使用的浏览器名称和版本号。',
+                'lang': '浏览器首选语言，如zh-CN表示简体中文，网站会据此优先提供该语言内容。',
+                'scr': '屏幕的像素分辨率，网站可以据此调整页面布局。',
+                'dpr': '设备像素比：物理像素和CSS像素的比值，影响图形清晰度。',
+                'orient': '屏幕方向：竖屏还是横屏，多见于移动设备。',
+                'tz': '系统时区，比如Asia/Shanghai，反映您的地理区域。',
+                'locale': '浏览器语言区域设置，同语言偏好。',
+                'syslang': '操作系统/浏览器提供的语言列表。',
+                'engine': '浏览器的渲染引擎，如WebKit、Blink、Gecko。',
+                'apis': '浏览器支持的各种Web API列表，支持越多说明浏览器越现代。',
+                'domload': '网页主文档解析完成的时间，表示页面结构已准备好。',
+                'trans': '页面导航请求传输的数据大小。',
+                'cache': '当前页面是从缓存加载还是从网络重新下载的。',
+                'mime': '浏览器能识别和支持的文件类型列表。',
+                'fontsize': '浏览器默认文本大小，通常继承自系统设置。',
+                'colordepth': '屏幕色彩深度，如24-bit表示真彩色。',
+                'geolocation': '定位权限：允许网站获取您的精确经纬度，常用于地图和附近推荐，但会暴露您在哪里。',
+                'camera': '摄像头权限：允许网站使用您的摄像头拍照或视频，请谨慎授予。',
+                'microphone': '麦克风权限：允许网站录制您的声音，用于语音聊天或录音。',
+                'notifications': '通知权限：允许网站向您发送桌面或手机通知，即使您没有打开网站。',
+                'clipboard-read': '读取剪贴板：网站可以看您最近复制了什么内容，可能包括密码等敏感信息。',
+                'clipboard-write': '写入剪贴板：网站可以修改您复制的内容，存在安全风险。',
+                'display-capture': '屏幕共享/录制：允许网站捕获您的整个屏幕或某个窗口，用于远程协助或演示。',
+                'bluetooth': '蓝牙权限：网站可以搜索并连接您附近的蓝牙设备，如耳机、手环等。',
+                'usb': 'USB权限：网页可以直接与您插入的USB设备（如U盘、打印机）通信。',
+                'serial': '串口权限：允许网页通过传统串行端口与硬件设备（如开发板）交换数据。',
+                'hid': '外设键鼠/手柄权限：网页可直接与键盘、鼠标、游戏手柄等交互，常用于云游戏。',
+                'file-handles': '本地文件访问：网站可以打开您设备上的文件夹并读取文件，需明确授予。',
+                'persistent-storage': '永久存储：请求浏览器为该网站分配不会被自动清理的存储空间。',
+                'background-sync': '后台同步：允许网站在后台安静地上传或下载数据，即使页面已关闭。',
+                'network-info': '网络详情：获取更多网络状态信息，如信号强度、链接类型等。',
+                'motion-sensors': '运动传感器：访问加速度计、陀螺仪和罗盘，用于AR、游戏和运动分析。',
+                'vibration': '设备震动：允许网页让您的手机或手柄震动，作为触觉反馈。',
+                'window-management': '多屏幕管理：网页可以检测并使用多个显示器，适合多屏办公场景。'
+            };
+
+            const cardData = {
+                critical: [
+                    {l:'公网IP', id:'ip', icon:'fa-solid fa-globe'},
+                    {l:'运营商', id:'isp', icon:'fa-solid fa-building'},
+                    {l:'城市定位', id:'location', icon:'fa-solid fa-map-marker-alt'},
+                    {l:'WebGL渲染器', id:'webgl', icon:'fa-solid fa-cube'},
+                    {l:'Canvas指纹', id:'canvas', icon:'fa-solid fa-fingerprint'},
+                    {l:'音频指纹', id:'audio', icon:'fa-solid fa-wave-square'},
+                    {l:'电池状态', id:'battery', icon:'fa-solid fa-battery-full'},
+                    {l:'CPU核心', id:'cores', icon:'fa-solid fa-microchip'},
+                    {l:'GPU信息', id:'gpu', icon:'fa-solid fa-tv'},
+                    {l:'已安装字体', id:'fonts', icon:'fa-solid fa-font'},
+                    {l:'插件列表', id:'plugins', icon:'fa-solid fa-puzzle-piece'},
+                    {l:'综合指纹', id:'fingerprint', icon:'fa-solid fa-id-card'}
+                ],
+                high: [
+                    {l:'Cookie', id:'cookie', icon:'fa-solid fa-cookie-bite'},
+                    {l:'LocalStorage', id:'ls', icon:'fa-solid fa-database'},
+                    {l:'SessionStorage', id:'ss', icon:'fa-solid fa-box'},
+                    {l:'IndexedDB', id:'idb', icon:'fa-solid fa-server'},
+                    {l:'Referrer', id:'ref', icon:'fa-solid fa-link'},
+                    {l:'历史长度', id:'hist', icon:'fa-solid fa-history'},
+                    {l:'页面可见', id:'vis', icon:'fa-solid fa-eye'},
+                    {l:'闲置时长', id:'idle', icon:'fa-solid fa-hourglass-end'}
+                ],
+                medium: [
+                    {l:'精确时间', id:'time', icon:'fa-solid fa-clock'},
+                    {l:'CPU核心', id:'cpu', icon:'fa-solid fa-microchip'},
+                    {l:'设备内存', id:'mem', icon:'fa-solid fa-memory'},
+                    {l:'RTT延迟', id:'rtt', icon:'fa-solid fa-stopwatch'},
+                    {l:'下行带宽', id:'downlink', icon:'fa-solid fa-download'},
+                    {l:'连接类型', id:'ect', icon:'fa-solid fa-network-wired'},
+                    {l:'DNS耗时', id:'dns', icon:'fa-solid fa-search'},
+                    {l:'TCP耗时', id:'tcp', icon:'fa-solid fa-plug'},
+                    {l:'TLS耗时', id:'tls', icon:'fa-solid fa-lock'},
+                    {l:'导航耗时', id:'nav', icon:'fa-solid fa-route'},
+                    {l:'资源性能', id:'res', icon:'fa-solid fa-chart-bar'}
+                ],
+                low: [
+                    {l:'网络类型', id:'nettype', icon:'fa-solid fa-wifi'},
+                    {l:'省流量', id:'savedata', icon:'fa-solid fa-tachometer-alt'},
+                    {l:'下行预估', id:'dlbw', icon:'fa-solid fa-arrow-down'},
+                    {l:'上行测速', id:'upspeed', icon:'fa-solid fa-arrow-up'},
+                    {l:'完整UA', id:'ua', icon:'fa-solid fa-info-circle'},
+                    {l:'平台', id:'plat', icon:'fa-solid fa-desktop'},
+                    {l:'浏览器版本', id:'bver', icon:'fa-brands fa-chrome'},
+                    {l:'语言', id:'lang', icon:'fa-solid fa-language'}
+                ],
+                minimal: [
+                    {l:'分辨率', id:'scr', icon:'fa-solid fa-expand'},
+                    {l:'像素比', id:'dpr', icon:'fa-solid fa-eye-dropper'},
+                    {l:'屏幕方向', id:'orient', icon:'fa-solid fa-mobile-alt'},
+                    {l:'时区', id:'tz', icon:'fa-solid fa-globe-americas'},
+                    {l:'地区码', id:'locale', icon:'fa-solid fa-flag'},
+                    {l:'系统语言', id:'syslang', icon:'fa-solid fa-globe'},
+                    {l:'渲染引擎', id:'engine', icon:'fa-solid fa-cogs'},
+                    {l:'API支持', id:'apis', icon:'fa-solid fa-code'},
+                    {l:'DOM加载', id:'domload', icon:'fa-solid fa-spinner'},
+                    {l:'传输大小', id:'trans', icon:'fa-solid fa-weight-hanging'},
+                    {l:'缓存状态', id:'cache', icon:'fa-solid fa-archive'},
+                    {l:'MIME类型', id:'mime', icon:'fa-solid fa-file-alt'},
+                    {l:'默认字号', id:'fontsize', icon:'fa-solid fa-text-height'},
+                    {l:'色彩深度', id:'colordepth', icon:'fa-solid fa-palette'}
+                ]
+            };
+
+            const permList = {
+                critical: [],
+                high: [
+                    {k:'geolocation', n:'定位', icon:'fa-solid fa-map-pin'},
+                    {k:'clipboard-read', n:'读取剪贴板', icon:'fa-solid fa-clipboard'},
+                    {k:'clipboard-write', n:'写入剪贴板', icon:'fa-solid fa-clipboard-check'},
+                    {k:'notifications', n:'通知推送', icon:'fa-solid fa-bell'}
+                ],
+                medium: [
+                    {k:'camera', n:'摄像头', icon:'fa-solid fa-video'},
+                    {k:'microphone', n:'麦克风', icon:'fa-solid fa-microphone'},
+                    {k:'display-capture', n:'屏幕录制/共享', icon:'fa-solid fa-desktop'},
+                    {k:'bluetooth', n:'蓝牙', icon:'fa-brands fa-bluetooth'},
+                    {k:'usb', n:'USB', icon:'fa-brands fa-usb'}
+                ],
+                low: [
+                    {k:'serial', n:'串口', icon:'fa-solid fa-terminal'},
+                    {k:'hid', n:'外设键鼠/手柄', icon:'fa-solid fa-gamepad'},
+                    {k:'file-handles', n:'本地文件', icon:'fa-solid fa-folder-open'},
+                    {k:'persistent-storage', n:'永久存储', icon:'fa-solid fa-save'},
+                    {k:'background-sync', n:'后台同步', icon:'fa-solid fa-sync'}
+                ],
+                minimal: [
+                    {k:'network-info', n:'网络详情', icon:'fa-solid fa-signal'},
+                    {k:'motion-sensors', n:'运动传感器', icon:'fa-solid fa-running'},
+                    {k:'vibration', n:'设备震动', icon:'fa-solid fa-mobile'},
+                    {k:'window-management', n:'多屏幕管理', icon:'fa-solid fa-window-restore'}
+                ]
+            };
+
+            function buildAllPages() {
+                pageContainer.innerHTML = pages.map(p => `
+                    <div class="page ${p==='critical'?'active':''}" id="page-${p}">
+                        <div class="cards-grid" id="grid-${p}"></div>
+                        <div class="permission-section" id="perm-${p}"></div>
+                    </div>
+                `).join('');
+
+                for (const [pid, cards] of Object.entries(cardData)) {
+                    const grid = document.getElementById(`grid-${pid}`);
+                    if (!grid) continue;
+                    grid.innerHTML = cards.map(c => `
+                        <div class="info-card">
+                            <div class="card-label" data-explain="${c.id}"><i class="${c.icon}"></i> ${c.l}</div>
+                            <div class="card-value" id="v-${c.id}"><span class="hourglass-loader">⏳</span> 检测中</div>
+                        </div>`).join('');
+                    if (pid === 'high') {
+                        const track = document.createElement('div');
+                        track.className = 'info-card track-card';
+                        track.innerHTML = '<div class="card-label" data-explain="track"><i class="fa-solid fa-mouse-pointer"></i> 实时行为追踪</div><div class="card-value" id="track-panel" style="max-height:180px;flex-direction:column;align-items:flex-start;"><span class="hourglass-loader">⏳</span> 检测中</div>';
+                        grid.appendChild(track);
+                    }
+                }
+
+                for (const [pid, perms] of Object.entries(permList)) {
+                    const sec = document.getElementById(`perm-${pid}`);
+                    if (!sec) continue;
+                    if (perms.length === 0) { sec.innerHTML = ''; continue; }
+                    sec.innerHTML = `<div class="permission-section-header"><i class="fa-solid fa-key"></i> 以下权限需手动授权</div>
+                        <div class="auth-grid" id="auth-grid-${pid}"></div>`;
+                    const authGrid = document.getElementById(`auth-grid-${pid}`);
+                    perms.forEach(p => {
+                        const card = document.createElement('div');
+                        card.className = 'auth-card';
+                        card.innerHTML = `
+                            <div class="auth-info">
+                                <span class="auth-name" data-explain="${p.k}"><i class="${p.icon}"></i> ${p.n}</span>
+                                <div class="auth-status" id="status-${p.k}">暂未请求</div>
+                            </div>
+                            <button class="auth-btn" id="btn-${p.k}" data-key="${p.k}">点击授权</button>
+                        `;
+                        authGrid.appendChild(card);
+                    });
+                }
+
+                document.querySelectorAll('[data-explain]').forEach(el => {
+                    el.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        showExplanation(this.dataset.explain);
+                    });
+                });
+
+                document.querySelectorAll('.auth-btn').forEach(btn => btn.addEventListener('click', function(){
+                    requestPermission(this.dataset.key);
+                }));
+            }
+
+            const modalOverlay = document.getElementById('modalOverlay');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalDesc = document.getElementById('modalDescription');
+            const modalCloseX = document.getElementById('modalCloseX');
+
+            function showExplanation(key) {
+                modalTitle.textContent = key;
+                modalDesc.textContent = explanations[key] || '暂无详细说明';
+                modalOverlay.classList.add('show');
+                document.body.classList.add('modal-open');
+            }
+
+            function hideModal() {
+                modalOverlay.classList.remove('show');
+                document.body.classList.remove('modal-open');
+            }
+
+            modalCloseX.addEventListener('click', hideModal);
+            modalOverlay.addEventListener('click', e => { if(e.target === modalOverlay) hideModal(); });
+
+            function switchPage(pid) {
+                if (currentPage === pid) return;
+                const oldPage = document.getElementById('page-' + currentPage);
+                const newPage = document.getElementById('page-' + pid);
+                if (!newPage) return;
+
+                if (oldPage) {
+                    oldPage.classList.remove('active');
+                    oldPage.style.display = 'none';
+                }
+
+                newPage.style.display = 'block';
+                void newPage.offsetWidth;
+                newPage.classList.add('active');
+
+                navTabs.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.page === pid));
+                currentPage = pid;
+                pageWrapper.className = 'page-wrapper ' + pid + '-bg';
+            }
+
+            navTabs.addEventListener('click', e => {
+                const tab = e.target.closest('.nav-tab');
+                if (tab) switchPage(tab.dataset.page);
+            });
+
+            function formatDateTime(date) {
+                const y = date.getFullYear();
+                const m = (date.getMonth()+1).toString().padStart(2,'0');
+                const d = date.getDate().toString().padStart(2,'0');
+                const h = date.getHours().toString().padStart(2,'0');
+                const min = date.getMinutes().toString().padStart(2,'0');
+                const s = date.getSeconds().toString().padStart(2,'0');
+                return `${y}/${m}/${d} ${h}:${min}:${s}`;
+            }
+
+            function setVal(id, text) {
+                const el = document.getElementById('v-'+id);
+                if (el) el.innerHTML = text;
+            }
+
+            function withTimeout(promise, ms) {
+                let timer;
+                const timeoutPromise = new Promise((_, reject) => {
+                    timer = setTimeout(() => reject(new Error('timeout')), ms);
+                });
+                return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+            }
+
+            async function requestPermission(key) {
+                const statusEl = document.getElementById('status-'+key);
+                const btn = document.getElementById('btn-'+key);
+                if (!btn || btn.disabled) return;
+                btn.disabled = true;
+                btn.classList.remove('granted','denied','hidden');
+                btn.textContent = '点击授权';
+                if (statusEl) statusEl.innerHTML = '<span class="hourglass-loader">⏳</span> 检测中';
+                try {
+                    const ops = {
+                        'geolocation': () => new Promise((resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+                        }),
+                        'camera': () => navigator.mediaDevices.getUserMedia({video:true}),
+                        'microphone': () => navigator.mediaDevices.getUserMedia({audio:true}),
+                        'notifications': () => Notification.requestPermission(),
+                        'clipboard-read': () => navigator.clipboard.readText(),
+                        'clipboard-write': () => navigator.clipboard.writeText('test'),
+                        'display-capture': () => navigator.mediaDevices.getDisplayMedia({video:true}),
+                        'bluetooth': () => navigator.bluetooth.requestDevice({acceptAllDevices:true}),
+                        'usb': () => navigator.usb.requestDevice({filters:[]}),
+                        'serial': () => navigator.serial.requestPort(),
+                        'hid': () => navigator.hid.requestDevice({filters:[]}),
+                        'file-handles': () => window.showOpenFilePicker(),
+                        'persistent-storage': () => navigator.storage.persist(),
+                        'background-sync': async () => { if(!('serviceWorker' in navigator)) throw new Error('unsupported'); },
+                        'network-info': async () => { if(!navigator.connection) throw new Error('unsupported'); },
+                        'motion': async () => {
+                            if (typeof DeviceMotionEvent === 'undefined') throw new Error('unsupported');
+                            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                                const r = await DeviceMotionEvent.requestPermission();
+                                if (r !== 'granted') throw new Error('denied');
+                            }
+                        },
+                        'vibration': async () => { if(!navigator.vibrate) throw new Error('unsupported'); navigator.vibrate(200); },
+                        'window-management': async () => {
+                            if (!('getScreenDetails' in window)) throw new Error('unsupported');
+                            await window.getScreenDetails();
+                        }
+                    };
+                    const operation = ops[key];
+                    if (!operation) throw new Error('unknown');
+                    await withTimeout(operation(), 5000);
+                    statusEl.textContent = '✅ 已授权';
+                    btn.classList.add('granted','hidden');
+                } catch (e) {
+                    let msg = '请求失败';
+                    if (e.message === 'timeout') msg = '请求超时';
+                    else if (e.message === 'unsupported' || e.message?.includes('不支持')) msg = '权限不支持';
+                    else if (e.message === 'denied' || e.name === 'NotAllowedError') msg = '授权拒绝';
+                    if (statusEl) statusEl.textContent = '❌ ' + msg;
+                    btn.classList.add('denied');
+                } finally {
+                    btn.disabled = false;
+                }
+            }
+
+            function simpleHash(str) {
+                let hash = 0;
+                for (let i=0; i<str.length; i++) hash = ((hash<<5)-hash)+str.charCodeAt(i)|0;
+                return (hash>>>0).toString(16).padStart(8,'0');
+            }
+
+            async function populateData() {
+                withTimeout(fetch('https://api.ipify.org?format=json'), 5000)
+                    .then(r => r.json()).then(d => setVal('ip', d.ip))
+                    .catch(e => setVal('ip', e.message==='timeout'?'请求超时':'请求失败'));
+                withTimeout(fetch('https://ipapi.co/json/'), 5000)
+                    .then(r => r.json()).then(d => {
+                        setVal('isp', d.org || d.asn || '请求失败');
+                        setVal('location', (d.city||'')+', '+(d.region||'')+', '+(d.country_name||''));
+                    }).catch(e => {
+                        const msg = e.message==='timeout'?'请求超时':'请求失败';
+                        setVal('isp', msg);
+                        setVal('location', msg);
+                    });
+
+                try {
+                    const cv=document.createElement('canvas'); const gl=cv.getContext('webgl');
+                    if(gl){ const ext=gl.getExtension('WEBGL_debug_renderer_info'); setVal('webgl', ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):'受保护'); }
+                    else setVal('webgl','WebGL不可用');
+                } catch { setVal('webgl','请求失败'); }
+                try {
+                    const c=document.createElement('canvas'); c.width=200;c.height=40;
+                    const ctx=c.getContext('2d'); ctx.fillText('FP'+Date.now(),6,24);
+                    setVal('canvas', simpleHash(c.toDataURL()));
+                } catch { setVal('canvas','请求失败'); }
+                try {
+                    const actx=new (window.AudioContext||window.webkitAudioContext)();
+                    setVal('audio', simpleHash(actx.sampleRate+'|'+actx.destination.maxChannelCount));
+                    actx.close();
+                } catch { setVal('audio','请求失败'); }
+                if(navigator.getBattery) {
+                    withTimeout(navigator.getBattery(), 5000)
+                        .then(b => setVal('battery', Math.round(b.level*100)+'% '+(b.charging?'充电中':'使用电池')))
+                        .catch(e => setVal('battery', e.message==='timeout'?'请求超时':'请求失败'));
+                } else setVal('battery','API不可用');
+                setVal('cores', navigator.hardwareConcurrency ? navigator.hardwareConcurrency+'核' : '请求失败');
+                setVal('gpu', document.getElementById('v-webgl')?.textContent || '请求失败');
+
+                setTimeout(() => {
+                    const fonts=['Arial','微软雅黑','Consolas','Georgia','Impact','宋体','黑体','楷体','仿宋'];
+                    const base=document.createElement('span'); base.style.cssText='position:absolute;visibility:hidden;font-size:20px;font-family:monospace';
+                    base.textContent='测试'; document.body.appendChild(base); const bw=base.offsetWidth;
+                    const found=fonts.filter(f=>{ base.style.fontFamily=`"${f}",monospace`; return base.offsetWidth!==bw; });
+                    document.body.removeChild(base);
+                    setVal('fonts', found.length ? found.join(', ') : '未检测到额外字体');
+                }, 200);
+
+                try {
+                    const pl=navigator.plugins; if(pl&&pl.length) { const names=[]; for(let i=0;i<pl.length;i++) names.push(pl[i].name); setVal('plugins', names.join(', ')); }
+                    else setVal('plugins','无');
+                } catch { setVal('plugins','请求失败'); }
+                setVal('fingerprint', simpleHash(navigator.userAgent+'|'+screen.width+'x'+screen.height+'|'+navigator.language));
+                setVal('cookie', document.cookie ? document.cookie.split(';').length+'个' : '无');
+                try { setVal('ls', localStorage.length+'项'); } catch { setVal('ls','不可用'); }
+                try { setVal('ss', sessionStorage.length+'项'); } catch { setVal('ss','不可用'); }
+                setVal('idb', window.indexedDB?'可用':'不可用');
+                setVal('ref', document.referrer||'无'); setVal('hist', history.length+'条');
+                setVal('vis', document.visibilityState==='visible'?'可见':'隐藏');
+                document.addEventListener('visibilitychange', ()=>setVal('vis', document.visibilityState==='visible'?'可见':'隐藏'));
+
+                let lastAct=Date.now();
+                setInterval(()=>{ const sec=Math.floor((Date.now()-lastAct)/1000); setVal('idle', sec+'秒'+(sec>30?' (可能离开)':'')); },2000);
+                ['mousemove','keydown','scroll','click','touchstart'].forEach(e=>document.addEventListener(e, ()=>lastAct=Date.now(),{passive:true}));
+                const trackPanel=document.getElementById('track-panel');
+                if(trackPanel){
+                    let log=[],clickC=0,scrollC=0,start=Date.now();
+                    const add=(type,detail)=>{ log.push(formatDateTime(new Date())+' '+type+': '+detail); if(log.length>10) log.shift(); trackPanel.innerHTML=log.join('<br>'); };
+                    add('SESSION','开始追踪');
+                    document.addEventListener('click',e=>{clickC++;add('点击',`${e.clientX},${e.clientY}`);},true);
+                    document.addEventListener('wheel',()=>{scrollC++;if(scrollC%5===0) add('滚轮','累计'+scrollC);},{passive:true});
+                }
+
+                function updateTime(){ setVal('time', formatDateTime(new Date())); }
+                updateTime(); setInterval(updateTime,1000);
+
+                const conn=navigator.connection||{};
+                setVal('rtt', conn.rtt!=null?conn.rtt+'ms':'请求失败');
+                setVal('downlink', conn.downlink!=null?conn.downlink+'Mbps':'请求失败');
+                setVal('ect', conn.effectiveType||'请求失败');
+                setVal('nettype', conn.type||'请求失败');
+                setVal('savedata', conn.saveData?'是':'否');
+                setVal('dlbw', conn.downlink!=null?conn.downlink+'Mbps':'请求失败');
+                const upEl=document.getElementById('v-upspeed');
+                if(upEl){ upEl.innerHTML=''; const btn=document.createElement('button'); btn.textContent='测试上行速度'; btn.style.cssText='padding:4px 12px;border-radius:10px;font-size:0.7rem;cursor:pointer;'; btn.onclick=async function(){ btn.disabled=true; try{ const start=performance.now(); await withTimeout(fetch('https://httpbin.org/post',{method:'POST',body:new Uint8Array(200*1024)}),5000); const dur=(performance.now()-start)/1000; upEl.innerHTML='⬆️ '+(200*8/1024/dur).toFixed(1)+' Mbps'; } catch(e){ upEl.innerHTML=e.message==='timeout'?'请求超时':'请求失败'; } }; upEl.appendChild(btn); }
+
+                setVal('ua', navigator.userAgent); setVal('plat', navigator.platform||'请求失败');
+                const ua=navigator.userAgent; let bver='请求失败';
+                if(ua.includes('Edg/')) bver='Edge '+ua.match(/Edg\/([\d.]+)/)[1];
+                else if(ua.includes('Chrome/')&&!ua.includes('Edg')) bver='Chrome '+ua.match(/Chrome\/([\d.]+)/)[1];
+                else if(ua.includes('Firefox/')) bver='Firefox '+ua.match(/Firefox\/([\d.]+)/)[1];
+                else if(ua.includes('Safari/')&&!ua.includes('Chrome')) bver='Safari '+ua.match(/Version\/([\d.]+)/)[1];
+                setVal('bver', bver); setVal('lang', (navigator.languages||[navigator.language]).join(','));
+
+                setVal('scr', screen.width+'×'+screen.height); setVal('dpr', devicePixelRatio.toFixed(2));
+                try{ const o=screen.orientation; setVal('orient', o?o.type+' '+o.angle+'°':'请求失败'); } catch{ setVal('orient','请求失败'); }
+                setVal('colordepth', screen.colorDepth+'bit');
+                setVal('tz', Intl.DateTimeFormat().resolvedOptions().timeZone||'请求失败');
+                setVal('locale', navigator.language||'请求失败');
+                setVal('syslang', (navigator.languages||[]).join(','));
+                setVal('engine', navigator.userAgent.includes('AppleWebKit')?'WebKit/Blink':(navigator.userAgent.includes('Gecko')?'Gecko':'其它'));
+
+                const apiTests={ 'WebGL':()=>!!document.createElement('canvas').getContext('webgl'), 'WebRTC':()=>'mediaDevices' in navigator, 'ServiceWorker':()=>'serviceWorker' in navigator, 'IndexedDB':()=>!!window.indexedDB, 'localStorage':()=>!!window.localStorage, 'sessionStorage':()=>!!window.sessionStorage, 'Canvas':()=>!!document.createElement('canvas').getContext('2d'), 'AudioContext':()=>!!(window.AudioContext||window.webkitAudioContext) };
+                const sup=[],unsup=[];
+                for(const [name,test] of Object.entries(apiTests)){ if(test()) sup.push(name); else unsup.push(name); }
+                setVal('apis', '✅ 支持: '+sup.join(', ')+(unsup.length?'\n❌ 不支持: '+unsup.join(', '):''));
+
+                setTimeout(()=>{
+                    const navEntry=performance.getEntriesByType('navigation')[0];
+                    if(navEntry){
+                        setVal('dns',(navEntry.domainLookupEnd-navEntry.domainLookupStart).toFixed(1)+'ms');
+                        setVal('tcp',(navEntry.connectEnd-navEntry.connectStart).toFixed(1)+'ms');
+                        setVal('tls',navEntry.secureConnectionStart>0?(navEntry.connectEnd-navEntry.secureConnectionStart).toFixed(1)+'ms':'0ms');
+                        setVal('nav',(navEntry.loadEventEnd-navEntry.fetchStart).toFixed(1)+'ms');
+                        setVal('domload',(navEntry.domContentLoadedEventEnd-navEntry.fetchStart).toFixed(1)+'ms');
+                        setVal('trans',navEntry.transferSize>0?(navEntry.transferSize/1024).toFixed(2)+'KB':'缓存');
+                        setVal('cache',navEntry.type==='navigate'?(navEntry.transferSize===0?'完全缓存':'网络加载'):navEntry.type);
+                    }
+                    setVal('res',performance.getEntriesByType('resource').length+'个');
+                },600);
+                setVal('mime','text/html, application/json, image/png, image/jpeg, image/webp, audio/mpeg, video/mp4');
+                const t=document.createElement('div'); t.style.cssText='position:absolute;visibility:hidden;font-size:1rem;'; t.textContent='T'; document.body.appendChild(t); setVal('fontsize',getComputedStyle(t).fontSize); document.body.removeChild(t);
+            }
+
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+
+            function init() {
+                buildAllPages();
+                populateData();
+            }
+
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+            else init();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>更新日志 - WT权限站</title>
+    <link rel="icon" type="image/jpeg" href="Picture/profile.jpg">
+    <style>
+        :root {
+            --spring-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            background-color: #f5f5f7;
+            color: #1c1b1f;
+        }
+
+        body.light-theme {
+            background-color: #f5f5f7;
+            color: #1c1b1f;
+        }
+        body.light-theme h1 {
+            color: #00668B;
+        }
+        body.light-theme .entry {
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.02);
+            color: #1c1b1f;
+        }
+        body.light-theme .entry .date {
+            color: #6f6e77;
+        }
+        body.light-theme .entry:hover {
+            box-shadow: 0 4px 12px rgba(0, 102, 139, 0.1);
+        }
+        body.light-theme .entry strong {
+            color: #1c1b1f;
+        }
+        body.light-theme .nav-btn {
+            background: #00668B;
+            color: white;
+        }
+        body.light-theme .nav-btn:hover {
+            background: #004c6b;
+        }
+        body.light-theme footer {
+            color: #6f6e77;
+        }
+
+        body.dark-theme {
+            background-color: #121217;
+            color: #e6e1e5;
+        }
+        body.dark-theme h1 {
+            color: #7ad0ff;
+        }
+        body.dark-theme .entry {
+            background: #252429;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08);
+            color: #e6e1e5;
+        }
+        body.dark-theme .entry .date {
+            color: #b7b2bd;
+        }
+        body.dark-theme .entry:hover {
+            box-shadow: 0 4px 12px rgba(122, 208, 255, 0.15);
+        }
+        body.dark-theme .entry strong {
+            color: #ffffff;
+        }
+        body.dark-theme .nav-btn {
+            background: #00668B;
+            color: white;
+        }
+        body.dark-theme .nav-btn:hover {
+            background: #004c6b;
+        }
+        body.dark-theme footer {
+            color: #9e9aa8;
+        }
+
+        .content-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0 0 24px 0;
+            font-weight: 650;
+            letter-spacing: -0.3px;
+            font-size: 1.6rem;
+        }
+
+        .entry {
+            padding: 14px 16px;
+            border-radius: 14px;
+            margin-bottom: 10px;
+            transition: transform 0.2s var(--spring-easing), box-shadow 0.2s var(--spring-easing), opacity 0.2s var(--spring-easing);
+            will-change: transform, opacity;
+            opacity: 0;
+            transform: translateY(6px);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .entry.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .entry:hover {
+            transform: translateY(-1px);
+        }
+        .entry .date {
+            font-size: 0.8em;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .entry strong {
+            font-weight: 650;
+        }
+        .entry div {
+            line-height: 1.55;
+        }
+
+        .nav-btn {
+            display: inline-block;
+            padding: 10px 22px;
+            background: #00668B;
+            color: white;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 550;
+            font-size: 0.9rem;
+            transition: all 0.2s var(--spring-easing);
+        }
+        .nav-btn:active {
+            transform: scale(0.97);
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            padding: 20px 0 10px;
+            margin-top: 24px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+        }
+        body.dark-theme footer {
+            border-top-color: rgba(255,255,255,0.08);
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 16px;
+            }
+            .entry {
+                padding: 12px 14px;
+                border-radius: 12px;
+                margin-bottom: 8px;
+            }
+            h1 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="content-wrapper">
+        <h1>📝 更新日志</h1>
+
+        <div class="entry">
+            <div class="date">2026/04/25 20:00:00</div>
+            <div><strong>v1.0.0</strong><br>
+            🎯 立项：网站开始开发
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 20px 0 10px;">
+            <a href="index.html" class="nav-btn">🌐 前往网站</a>
+        </div>
+    </div>
+
+    <footer>
+        <p>© <span id="year"></span> 旅冬亦 版权所有</p>
+    </footer>
+
+    <script>
+        (function() {
+            const theme = localStorage.getItem('preferred-theme') || 'auto';
+            function applyTheme(mode) {
+                document.body.classList.remove('light-theme', 'dark-theme');
+                if (mode === 'light') {
+                    document.body.classList.add('light-theme');
+                } else if (mode === 'dark') {
+                    document.body.classList.add('dark-theme');
+                } else if (mode === 'auto') {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    document.body.classList.add(prefersDark ? 'dark-theme' : 'light-theme');
+                }
+            }
+            applyTheme(theme);
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                const current = localStorage.getItem('preferred-theme') || 'auto';
+                if (current === 'auto') applyTheme('auto');
+            });
+
+            document.getElementById('year').textContent = new Date().getFullYear();
+
+            const entries = document.querySelectorAll('.entry');
+            const observer = new IntersectionObserver((entriesObs) => {
+                entriesObs.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -20px 0px' });
+
+            entries.forEach(entry => observer.observe(entry));
+        })();
+    </script>
+</body>
+</html>
