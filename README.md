@@ -14,7 +14,7 @@
     <img src="https://img.shields.io/github/last-commit/lxj13533251583/WT-Permission" alt="GitHub last commit">
   </a>
   <a href="https://github.com/lxj13533251583/WT-Permission/releases">
-    <img src="https://img.shields.io/github/v/release/lxj13533251583/ldy" alt="GitHub release">
+    <img src="https://img.shields.io/github/v/release/lxj13533251583/WT-Permission" alt="GitHub release">
   </a>
   <a href="https://github.com/lxj13533251583/WT-Permission/releases">
     <img src="https://img.shields.io/github/release-date/lxj13533251583/WT-Permission" alt="Release date">
@@ -30,7 +30,7 @@
   </a>
 </div>
 
-🌐 **在线体验**：[点击跳转](https://lxj13533251583.github.io/ldy/)
+🌐 **在线体验**：[点击跳转](https://lxj13533251583.github.io/WT-Permission/)
 
 ## 📌 功能总览
 
