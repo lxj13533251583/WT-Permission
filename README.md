@@ -1,4 +1,4 @@
-# 🔐 WT权限站
+# <img src="https://lxj13533251583.github.io/WT-Permission/avatar.jpg" width="25" align="center"> WT权限站
 
 一个完全运行在浏览器端的**隐私权限检测工具**，帮助用户了解网站在不经授权或主动授权的情况下，能够获取到哪些设备与网络信息。
 
