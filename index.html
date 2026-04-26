@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=yes">
     <title>WT权限站</title>
-        <link rel="icon" type="image/jpeg" href=avatar.jpg">
+    <link rel="icon" type="image/jpeg" href="avatar.jpg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         :root {
@@ -74,7 +74,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            transition: background-color 0.3s, color 0.3s;
+            transition: background-color 0.3s ease, color 0.3s ease;
             overflow-x: hidden;
             word-break: break-word;
             -webkit-overflow-scrolling: touch;
@@ -94,13 +94,14 @@
             position:sticky; top:0; z-index:50;
             background:var(--surface);
             border-bottom:1px solid var(--border);
-            padding:6px 4px;
+            padding:6px 30px 6px 4px;
             display:flex;
             backdrop-filter:blur(10px);
             -webkit-backdrop-filter:blur(10px);
             box-shadow:0 1px 3px rgba(0,0,0,0.04);
             overflow-x:auto;
             -webkit-overflow-scrolling:touch;
+            position: relative;
         }
         .nav-tabs { display:flex; flex-wrap:nowrap; gap:2px; margin:0 auto; }
         .nav-tab {
@@ -126,6 +127,22 @@
         }
         .nav-tab .tab-icon { font-size:0.8rem; }
 
+        .scroll-hint {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text3);
+            font-size: 1.1rem;
+            pointer-events: none;
+            z-index: 5;
+            background: var(--surface);
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: opacity 0.15s;
+        }
+        .scroll-hint.hidden-hint { opacity: 0; }
+
         .page-wrapper {
             flex:1;
             display:flex;
@@ -144,13 +161,13 @@
             margin:0 auto;
             padding:16px 12px 30px;
             flex:1;
-            min-height: 80vh; /* 防止切换时高度塌陷 */
+            min-height: 80vh;
         }
         .page {
             display:none;
             opacity:0;
-            transform: translateY(12px);
-            transition: opacity 0.35s var(--spring-easing), transform 0.35s var(--spring-easing);
+            transform: translateY(6px);
+            transition: opacity 0.5s var(--spring-easing), transform 0.5s var(--spring-easing);
             pointer-events: none;
         }
         .page.active {
@@ -159,6 +176,28 @@
             transform: translateY(0);
             pointer-events: auto;
         }
+
+        .refresh-btn-container { margin-bottom: 10px; }
+        .refresh-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s var(--spring-easing);
+            width: 100%;
+            box-shadow: var(--shadow-card);
+            min-height: 44px;
+        }
+        .refresh-btn:hover { background: var(--btn-hover-bg); border-color: #8a95aa; }
+        .refresh-btn:active { transform: scale(0.98); transition: transform 0.1s ease; }
 
         .cards-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:10px; margin-bottom:20px; }
         .info-card {
@@ -169,6 +208,14 @@
             box-shadow:var(--shadow-card);
             word-break:break-word;
             min-width:0;
+            position: relative;
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 0.45s var(--spring-easing), transform 0.45s var(--spring-easing);
+        }
+        .info-card.card-visible {
+            opacity: 1;
+            transform: translateY(0);
         }
         .card-label {
             font-size:0.65rem;
@@ -198,7 +245,23 @@
             align-items:center;
             gap:6px;
         }
-        .track-card { grid-column:1/-1; background:var(--track-bg); }
+        .card-value .copy-target {
+            cursor: pointer;
+            display: inline;
+        }
+        .card-value .copy-target:active {
+            opacity: 0.7;
+        }
+        .track-card {
+            grid-column:1/-1;
+            background:var(--track-bg);
+            min-height: 5.625em;
+        }
+        .track-card .card-value {
+            max-height: 140px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
 
         .hourglass-loader {
             display: inline-flex;
@@ -227,6 +290,13 @@
             align-items:center;
             justify-content:space-between;
             gap:8px;
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 0.45s var(--spring-easing), transform 0.45s var(--spring-easing);
+        }
+        .auth-card.card-visible {
+            opacity: 1;
+            transform: translateY(0);
         }
         .auth-name {
             font-weight:600;
@@ -260,6 +330,13 @@
             .auth-btn.granted { background:#1a3a2a; color:#7ae0a0; }
             .auth-btn.denied { background:#3a1a1a; color:#fca5a5; }
         }
+
+        button, .btn, .repo-link-btn, .auth-btn {
+            transition: transform 0.1s ease, background-color 0.2s var(--spring-easing), border-color 0.2s var(--spring-easing);
+        }
+        button:active, .btn:active, .repo-link-btn:active, .auth-btn:active { transform: scale(0.98); }
+        a:active { transform: scale(0.98); background-color: rgba(0,102,139,0.1); border-radius: 4px; }
+        .modal-close-x:active { transform: scale(0.92); }
 
         .hidden { display:none !important; }
 
@@ -307,21 +384,18 @@
             color:var(--btn-text);
             text-decoration:none;
             transition:all 0.2s;
-            margin-top:8px;
+            margin-top:4px;
         }
         .repo-link-btn:hover { background:var(--btn-hover-bg); border-color:#8a95aa; }
 
         footer {
             text-align:center;
-            padding:16px 12px;
+            padding:12px 12px 16px;
             font-size:0.7rem;
             color:var(--text3);
         }
+        footer a { text-decoration: none; color: inherit; }
 
-        footer a {
-            text-decoration: none;
-            color: inherit;
-        }
         @media (max-width:640px) {
             .cards-grid, .auth-grid { grid-template-columns:1fr; }
         }
@@ -332,7 +406,7 @@
         <h1><i class="fa-solid fa-shield-halved"></i> WT权限站</h1>
         <p class="subtitle">一个测试可以获取到用户的权限的网站</p>
         <div class="disclaimer">
-            ⚠️ 所有检测均在本机浏览器完成，除公网IP查询需调用公开API外，不会将任何数据发送到外部服务器。不建议在本站内<strong>截图</strong>或公开访问，以免泄露隐私。
+            ⚠️ 所有检测均在本机浏览器完成，除公网IP查询需调用公开API外，不会将任何数据发送到外部服务器。权限信息仅供参考，不担负法律责任。不建议在本站内<strong>截图</strong>或公开访问，以免泄露隐私。
         </div>
     </header>
 
@@ -344,15 +418,16 @@
             <button class="nav-tab" data-page="low"><i class="fa-solid fa-circle tab-icon" style="color:#3182ce;"></i> 低敏感</button>
             <button class="nav-tab" data-page="minimal"><i class="fa-solid fa-circle tab-icon" style="color:#38a169;"></i> 极低敏感</button>
         </div>
+        <div class="scroll-hint" id="scrollHint"><i class="fa-solid fa-chevron-right"></i></div>
     </nav>
 
     <div class="page-wrapper critical-bg" id="pageWrapper">
         <div class="page-container" id="pageContainer"></div>
-        <div style="text-align:center; padding-bottom:20px;">
+        <div style="text-align:center; padding-bottom:8px;">
             <a href="https://github.com/lxj13533251583/WT-Permission" class="repo-link-btn" target="_blank"><i class="fa-solid fa-code-fork"></i> 访问源仓库</a>
         </div>
         <footer>
-            <div>© <span id="current-year"></span> <a href="https://github.com/lxj13533251583/" target="_blank" style="text-decoration: none; color: inherit;">旅冬亦</a> 版权所有</div>
+            <div>© <span id="current-year"></span> <a href="https://lxj13533251583.github.io/ldy" target="_blank">旅冬亦</a> 版权所有</div>
         </footer>
     </div>
 
@@ -371,86 +446,116 @@
             const pageContainer = document.getElementById('pageContainer');
             const navTabs = document.getElementById('navTabs');
             const pageWrapper = document.getElementById('pageWrapper');
+            const navbar = document.getElementById('navbar');
+            const scrollHint = document.getElementById('scrollHint');
+
+            const timezoneMap = {
+                'Asia/Shanghai': '亚洲/上海',
+                'Asia/Tokyo': '亚洲/东京',
+                'America/New_York': '美洲/纽约',
+                'Europe/London': '欧洲/伦敦',
+            };
+            const networkTypeMap = {
+                'cellular': '数据流量',
+                'wifi': 'WiFi',
+                'ethernet': '以太网',
+                'none': '无',
+                'unknown': '未知'
+            };
+            const languageMap = {
+                'zh-CN': '中文（中国）',
+                'zh-TW': '中文（台湾）',
+                'zh-HK': '中文（香港）',
+                'en-US': '英语（美国）',
+                'en-GB': '英语（英国）',
+                'ja-JP': '日语',
+                'ko-KR': '韩语',
+            };
+
+            function mapTimeZone(tz) { return timezoneMap[tz] || tz; }
+            function mapNetworkType(type) { return networkTypeMap[type] || type; }
+            function mapLanguage(lang) { return languageMap[lang] || lang; }
 
             const explanations = {
-                'ip': '公网IP是您设备在互联网上的唯一地址，就像门牌号一样。任何网站都能看到您的IP，从而知道您的大概地理位置和网络运营商。',
-                'isp': '您的互联网服务提供商，比如中国电信、中国联通等。通过IP可以轻松查出来。',
-                'location': '基于IP地址推测的城市范围，精度有限，通常只能到城市级别。',
-                'webgl': 'WebGL是浏览器用来调用显卡进行3D渲染的技术。通过它可以获得您的显卡型号和驱动信息，这些信息非常独特，经常被用来跟踪用户。',
-                'canvas': '浏览器画布指纹：通过让浏览器在画布上绘制隐藏的文字和图形，不同设备的微小差异会产生独一无二的图片，从而生成一个哈希值来识别您。',
-                'audio': '音频指纹：利用音频处理硬件和软件的细微差别生成的标识符，即使您清除了Cookie，这个指纹也不会消失。',
-                'battery': '电池状态：网页可以读取您设备的电量百分比、是否在充电等信息，这些看似无害的数据可以结合起来追踪用户。',
-                'cores': '您的设备有多少个逻辑处理器核心，反映了设备的性能水平。',
-                'gpu': '显卡的型号信息，和WebGL信息类似，用于设备指纹和性能检测。',
-                'fonts': '浏览器能检测到您系统中安装了哪些字体。不同设备安装的字体组合往往不同，可以用于识别用户。',
-                'plugins': '您浏览器中安装的插件列表，比如PDF阅读器等，插件组合也具有唯一性。',
-                'fingerprint': '设备综合指纹：将上述多种信息（屏幕分辨率、UA、字体、WebGL等）组合在一起，生成一个接近唯一的标识符，能跨站点追踪您。',
-                'cookie': '当前网站保存在您浏览器中的Cookie，常用于保持登录状态和追踪您的行为。',
-                'ls': '本地存储（LocalStorage）：网站可以长时间保存数据在您的浏览器中，即使关闭页面再打开也还在。',
-                'ss': '会话存储（SessionStorage）：和本地存储类似，但关闭浏览器标签页后数据就没了。',
-                'idb': 'IndexedDB：浏览器内置的较大型数据库，网站可以在里面存放大量结构化数据。',
-                'ref': '当前页面是从哪个URL跳转过来的，这能告诉目标网站您上一刻在浏览什么。',
-                'hist': '当前标签页的历史记录条目数量，可以大致推断您的浏览深度。',
-                'vis': '页面是否处于前台可见状态。当您切换到其他标签页时，网站会立即知晓。',
-                'idle': '您最后一次与页面交互（移动鼠标、点击、按键）的时间，网站可以推断您是否正在活跃使用。',
-                'time': '您设备上的当前精确时间，可以知道您所在的时区和时间习惯。',
-                'cpu': '逻辑处理器核心数量，同硬件并发信息。',
-                'mem': '设备内存容量（以GB为单位），用于评估设备性能。',
-                'rtt': '网络往返延迟：表示数据从您的设备到服务器再返回需要的时间，反映网络的实时质量。',
-                'downlink': '下行带宽估算值，网站可以据此调整视频清晰度等。',
-                'ect': '有效网络连接类型，比如4g、3g、wifi等，帮助网站了解您当前的网络环境。',
-                'dns': 'DNS解析时间：将域名转换成IP地址所用的时间，是网络性能的一部分。',
-                'tcp': 'TCP连接耗时：浏览器与服务器建立连接所需的时间。',
-                'tls': 'HTTPS安全握手耗时：建立加密连接花费的时间。',
-                'nav': '从开始导航到页面完全加载的总耗时。',
-                'res': '页面加载过程中请求的图片、脚本、样式等资源的数量和大小。',
-                'nettype': '底层网络连接类型（如wifi、蜂窝数据、以太网），能区分您是用流量还是宽带。',
-                'savedata': '是否开启了浏览器的省流量模式，开启后网站可能会提供简化内容。',
-                'dlbw': '预估的下行带宽，同downlink。',
-                'upspeed': '通过实际上传数据测量得到的上行速度，比估算值更准确。',
-                'ua': '用户代理字符串：包含您的浏览器品牌、版本、操作系统类型等详细信息，是网站识别设备最常见的方式。',
-                'plat': '操作系统平台，如Windows、Mac、Linux等。',
-                'bver': '您当前使用的浏览器名称和版本号。',
-                'lang': '浏览器首选语言，如zh-CN表示简体中文，网站会据此优先提供该语言内容。',
-                'scr': '屏幕的像素分辨率，网站可以据此调整页面布局。',
-                'dpr': '设备像素比：物理像素和CSS像素的比值，影响图形清晰度。',
-                'orient': '屏幕方向：竖屏还是横屏，多见于移动设备。',
-                'tz': '系统时区，比如Asia/Shanghai，反映您的地理区域。',
-                'locale': '浏览器语言区域设置，同语言偏好。',
-                'syslang': '操作系统/浏览器提供的语言列表。',
-                'engine': '浏览器的渲染引擎，如WebKit、Blink、Gecko。',
-                'apis': '浏览器支持的各种Web API列表，支持越多说明浏览器越现代。',
-                'domload': '网页主文档解析完成的时间，表示页面结构已准备好。',
-                'trans': '页面导航请求传输的数据大小。',
-                'cache': '当前页面是从缓存加载还是从网络重新下载的。',
-                'mime': '浏览器能识别和支持的文件类型列表。',
-                'fontsize': '浏览器默认文本大小，通常继承自系统设置。',
-                'colordepth': '屏幕色彩深度，如24-bit表示真彩色。',
-                'geolocation': '定位权限：允许网站获取您的精确经纬度，常用于地图和附近推荐，但会暴露您在哪里。',
-                'camera': '摄像头权限：允许网站使用您的摄像头拍照或视频，请谨慎授予。',
-                'microphone': '麦克风权限：允许网站录制您的声音，用于语音聊天或录音。',
-                'notifications': '通知权限：允许网站向您发送桌面或手机通知，即使您没有打开网站。',
-                'clipboard-read': '读取剪贴板：网站可以看您最近复制了什么内容，可能包括密码等敏感信息。',
-                'clipboard-write': '写入剪贴板：网站可以修改您复制的内容，存在安全风险。',
-                'display-capture': '屏幕共享/录制：允许网站捕获您的整个屏幕或某个窗口，用于远程协助或演示。',
-                'bluetooth': '蓝牙权限：网站可以搜索并连接您附近的蓝牙设备，如耳机、手环等。',
-                'usb': 'USB权限：网页可以直接与您插入的USB设备（如U盘、打印机）通信。',
-                'serial': '串口权限：允许网页通过传统串行端口与硬件设备（如开发板）交换数据。',
-                'hid': '外设键鼠/手柄权限：网页可直接与键盘、鼠标、游戏手柄等交互，常用于云游戏。',
-                'file-handles': '本地文件访问：网站可以打开您设备上的文件夹并读取文件，需明确授予。',
-                'persistent-storage': '永久存储：请求浏览器为该网站分配不会被自动清理的存储空间。',
-                'background-sync': '后台同步：允许网站在后台安静地上传或下载数据，即使页面已关闭。',
-                'network-info': '网络详情：获取更多网络状态信息，如信号强度、链接类型等。',
-                'motion-sensors': '运动传感器：访问加速度计、陀螺仪和罗盘，用于AR、游戏和运动分析。',
-                'vibration': '设备震动：允许网页让您的手机或手柄震动，作为触觉反馈。',
-                'window-management': '多屏幕管理：网页可以检测并使用多个显示器，适合多屏办公场景。'
+                'ip': '公网IP：你设备在互联网上的唯一地址，能直接暴露你的大致地理位置和网络运营商，几乎所有网站都能获取，可被用于追踪或攻击。',
+                'isp': '运营商：你的网络服务商（如移动、电信、联通），通过IP就能轻松查出，泄露你的网络身份和所在区域。',
+                'location': 'IP属地：基于IP推测的城市，虽精度只到市级，但能知道你位于哪个城市，结合其他信息可进一步缩小范围。',
+                'webgl': 'WebGL渲染器：通过显卡3D功能获取你的显卡型号和驱动版本，此信息高度唯一，常被用来构建设备指纹，即使清除Cookie也无法消除。',
+                'canvas': '画布指纹：让浏览器偷偷绘制隐藏图片，不同设备因硬件、字体等差异会生成独特图案，变成唯一标识，可跨网站跟踪你，极难屏蔽。',
+                'audio': '音频指纹：利用你设备音频处理硬件和软件的细微差异生成唯一标识，与Cookie无关，清除浏览数据也无法抹掉，可用于隐蔽追踪。',
+                'battery': '电池状态：网站能读取你的电量百分比和是否在充电，这些看似无害的数据结合起来，可能被用于识别你的设备，增加被追踪风险。',
+                'cores': 'CPU核心数：设备逻辑处理器数量，反映性能，属于硬件指纹信息，可与其他数据结合识别你的设备。',
+                'gpu': 'GPU信息：你的显卡型号，与WebGL信息类似，用于设备指纹识别和性能检测，暴露你的硬件配置。',
+                'fonts': '已安装字体：网站能检测到你系统里装了哪些字体，每个人的字体组合往往独特，可用于精准追踪，即使不用Cookie也能识别你。',
+                'plugins': '插件列表：你浏览器安装的插件（如PDF阅读器）列表，组合具有唯一性，可用来识别并持续追踪你的浏览器。',
+                'fingerprint': '综合指纹：将屏幕、系统、字体、显卡等多维信息汇聚，生成接近唯一的设备标识，能跨网站在不同站点间跟踪你，防不胜防。',
+                'cookie': 'Cookie：网站存储在你电脑上的小文件，用于保持登录，但也常用它记录你的浏览行为、推送广告，跨站追踪你的兴趣。',
+                'ls': '本地存储：网站能在你浏览器中长期保存数据，即使关闭页面再打开仍存在，可被用来持久追踪你的活动记录。',
+                'ss': '会话存储：临时存储数据，关闭标签页后清除，但网站仍可记录你本次浏览中的临时信息，辅助行为分析。',
+                'idb': 'IndexedDB：浏览器内置的大型数据库，网站可在此存放大量结构化数据，可能被用于长期追踪和离线行为记录。',
+                'ref': '来源页面：告诉当前网站你是从哪个网页链接跳转过来的，直接暴露你的上一刻浏览痕迹。',
+                'hist': '历史长度：当前标签页的历史记录条数，能推断你在此网站浏览了多少页，间接反映你的兴趣深度或行为模式。',
+                'vis': '页面可见性：网站能实时知道你是否正在看它的页面，当你切换到其他标签时它立即知晓，可能判断你的注意力状态。',
+                'idle': '空闲时长：你最后一次操作鼠标键盘到现在的时间，网站可借此推断你是否在电脑前，甚至是否离开，暴露活跃状态。',
+                'time': '系统时间：你设备上的精确时间，能推算出你的时区和作息习惯，泄露你的生活规律。',
+                'cpu': 'CPU核心：逻辑处理器核心数量，与硬件信息相同，属于设备指纹基础数据。',
+                'mem': '设备内存：你的设备内存大小（如GB），可衡量设备档次，是构建设备指纹的要素之一。',
+                'rtt': '网络延迟：数据从你设备到服务器再返回所需时间，反映网络质量，也可间接推测你的地理位置或网络环境。',
+                'downlink': '下行带宽：估算的下载速度，网站可据此调整内容清晰度，但也可能记录你的网络状况。',
+                'ect': '网络类型：能识别你正使用WiFi/4G/5G/网线，从而知道你在家、办公室或外出，泄露你的场景信息。',
+                'dns': 'DNS耗时：域名解析成IP地址的用时，可能暴露你使用的DNS服务商或网络状态。',
+                'tcp': 'TCP耗时：浏览器与服务器建立连接所需时间，测量网络性能，但也可辅助识别你的网络环境。',
+                'tls': 'TLS耗时：建立安全加密连接所花时间，反映网络安全状况和性能。',
+                'nav': '页面加载总耗时：从开始导航到页面完全加载所用的总时间，可衡量你网络或设备性能。',
+                'res': '资源请求统计：页面加载过程中请求的图片、脚本等资源数量和大小，暴露你浏览时获取的内容规模。',
+                'nettype': '连接类型：底层网络连接方式（如WiFi、流量、以太网），能区分你用的是宽带还是手机流量，泄露上网环境。',
+                'savedata': '省流量模式：是否开启了浏览器省流量模式，网站会据此提供精简内容，但也知悉了你的设置偏好。',
+                'dlbw': '下行带宽预估：同下行带宽，估算下载速度，反映你的网络条件。',
+                'upspeed': '上行测速：通过实际上传数据测量上行速度，比估算值更准，可能暴露你的网络质量和环境。',
+                'ua': '用户代理：包含浏览器型号、版本和操作系统的详细字符串，是网站识别设备最常用的方式，极易被用于追踪和攻击。',
+                'plat': '操作系统：你使用的系统类型（如Windows、Android），是设备指纹的基础信息，配合其他数据可唯一识别你。',
+                'bver': '浏览器版本：你浏览器的具体名称和版本号，可能被用于针对特定漏洞的攻击或跟踪。',
+                'lang': '首选语言：你浏览器设置的语言，比如简体中文，反映你的语言习惯，可能泄露你的国籍或地区。',
+                'scr': '屏幕分辨率：你屏幕的宽度和高度（像素），用于适配显示，也是指纹的重要组成，可帮助识别设备。',
+                'dpr': '像素比：物理像素和CSS像素的比值，能区分普通屏与高清屏，是设备指纹的细节之一。',
+                'orient': '屏幕方向：竖屏或横屏状态，多见于移动端，能泄露你手持设备的姿态。',
+                'tz': '时区：系统时区（如亚洲/上海），直接暴露你所在的地理区域，是定位你的关键信息。',
+                'locale': '区域语言：浏览器的区域-语言设置，同语言偏好，暴露你的文化及地理背景。',
+                'syslang': '系统语言列表：你操作系统所支持的所有语言，结合其他信息可更精准定位你的国籍或文化圈。',
+                'engine': '渲染引擎：浏览器内核类型（如WebKit、Blink），可帮助识别浏览器种类，辅助指纹。',
+                'apis': 'API支持列表：浏览器支持的功能接口列表，能暴露浏览器版本和特性，可能被用于寻找漏洞。',
+                'domload': 'DOM加载时间：网页结构解析完成的时间，反映设备处理速度，也可用于性能指纹分析。',
+                'trans': '传输大小：页面导航请求传输的数据量，通常较少，但也属于网络指纹的一部分。',
+                'cache': '缓存状态：页面从本地缓存打开还是重新下载，可能暴露你的浏览频率和习惯。',
+                'mime': 'MIME类型：浏览器支持的文件格式列表，属于功能信息，对隐私影响较小，但可辅助识别浏览器。',
+                'fontsize': '默认字号：浏览器的默认字体大小，通常继承自系统设置，细微差异可能被用于设备指纹。',
+                'colordepth': '色彩深度：屏幕颜色位数（如24位真彩色），是屏幕指纹的组成部分。',
+                'track': '实时行为追踪：页面会记录你在当前页面的鼠标点击、滚动等行为，并显示最近5条记录。你可以在此卡片内上下滑动查看之前的行为记录。这展示了网站如何监控你的交互行为。',
+                'geolocation': '定位：允许网站获取你的精确经纬度，直接暴露你所在的具体位置，隐私风险极高，务必谨慎授予。',
+                'camera': '摄像头：允许网站使用你的摄像头拍照或录像，可能在你不知情时偷拍你的环境，重大隐私威胁。',
+                'microphone': '麦克风：允许网站录音，可能偷听你周围的声音，泄露谈话内容，务必小心授权。',
+                'notifications': '通知：允许网站推送广告或提醒，即使没打开网页也能骚扰你，并可能被结合其他数据用于追踪。',
+                'clipboard-read': '读取剪贴板：网站能查看你最近复制的内容，可能包含密码、银行卡号等极度敏感信息，风险极大。',
+                'clipboard-write': '写入剪贴板：网站可以修改你复制的内容，如替换成恶意链接或数据，存在安全和隐私隐患。',
+                'display-capture': '屏幕共享/录制：允许网站捕获你的整个屏幕或指定窗口，能看光你屏幕上所有信息，演示时注意关闭隐私内容。',
+                'bluetooth': '蓝牙：允许网站搜索并连接你附近的蓝牙设备（如耳机、手环），可泄露你周边的设备列表和环境信息。',
+                'usb': 'USB：允许网页与你插入的U盘、打印机等USB设备通信，可能读取私人文件或写入恶意内容，风险较高。',
+                'serial': '串口：允许网页通过传统串行端口与硬件设备交换数据，常用于开发，但可能被恶意利用控制外设。',
+                'hid': '外设控制：允许网页直接访问你的键盘、鼠标、游戏手柄等，用于云游戏，但也可能监控你的输入行为。',
+                'file-handles': '本地文件访问：允许网站直接打开你电脑上的文件夹并读取文件，获得后有权访问你的文档，极度危险。',
+                'persistent-storage': '永久存储：请求浏览器为网站分配不会被自动清理的存储空间，可存放大量追踪数据，持久保存。',
+                'background-sync': '后台同步：允许网站在你关闭页面后仍在后台下载或上传数据，可能在你不知情时传送你的信息。',
+                'network-info': '网络详情：读取更详细的网络状态如信号强度，进一步剖析你的上网环境，增加隐私暴露。',
+                'motion-sensors': '运动传感器：获取加速度计、陀螺仪等数据，可用于分析你的运动姿态甚至步态，可能被用于行为识别。',
+                'vibration': '震动：允许网页让你的手机或手柄震动作为反馈，一般无害，但可能被用于交互追踪的辅助。',
+                'window-management': '多屏幕管理：允许网页检测你连接了几个显示器及它们的布局，可能暴露你的工作环境或多屏习惯。'
             };
 
             const cardData = {
                 critical: [
                     {l:'公网IP', id:'ip', icon:'fa-solid fa-globe'},
                     {l:'运营商', id:'isp', icon:'fa-solid fa-building'},
-                    {l:'城市定位', id:'location', icon:'fa-solid fa-map-marker-alt'},
+                    {l:'IP属地', id:'location', icon:'fa-solid fa-map-marker-alt'},
                     {l:'WebGL渲染器', id:'webgl', icon:'fa-solid fa-cube'},
                     {l:'Canvas指纹', id:'canvas', icon:'fa-solid fa-fingerprint'},
                     {l:'音频指纹', id:'audio', icon:'fa-solid fa-wave-square'},
@@ -545,6 +650,9 @@
             function buildAllPages() {
                 pageContainer.innerHTML = pages.map(p => `
                     <div class="page ${p==='critical'?'active':''}" id="page-${p}">
+                        <div class="refresh-btn-container">
+                            <button class="refresh-btn" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i> 刷新权限状态</button>
+                        </div>
                         <div class="cards-grid" id="grid-${p}"></div>
                         <div class="permission-section" id="perm-${p}"></div>
                     </div>
@@ -556,12 +664,12 @@
                     grid.innerHTML = cards.map(c => `
                         <div class="info-card">
                             <div class="card-label" data-explain="${c.id}"><i class="${c.icon}"></i> ${c.l}</div>
-                            <div class="card-value" id="v-${c.id}"><span class="hourglass-loader">⏳</span> 检测中</div>
+                            <div class="card-value" id="v-${c.id}"><span class="hourglass-loader">⏳</span> 申请中</div>
                         </div>`).join('');
                     if (pid === 'high') {
                         const track = document.createElement('div');
                         track.className = 'info-card track-card';
-                        track.innerHTML = '<div class="card-label" data-explain="track"><i class="fa-solid fa-mouse-pointer"></i> 实时行为追踪</div><div class="card-value" id="track-panel" style="max-height:180px;flex-direction:column;align-items:flex-start;"><span class="hourglass-loader">⏳</span> 检测中</div>';
+                        track.innerHTML = '<div class="card-label" data-explain="track"><i class="fa-solid fa-mouse-pointer"></i> 实时行为追踪</div><div class="card-value" id="track-panel" style="max-height:140px;flex-direction:column;align-items:flex-start; white-space:pre-wrap; overflow-y:auto;"><span class="hourglass-loader">⏳</span> 申请中</div>';
                         grid.appendChild(track);
                     }
                 }
@@ -570,7 +678,7 @@
                     const sec = document.getElementById(`perm-${pid}`);
                     if (!sec) continue;
                     if (perms.length === 0) { sec.innerHTML = ''; continue; }
-                    sec.innerHTML = `<div class="permission-section-header"><i class="fa-solid fa-key"></i> 以下权限需手动授权</div>
+                    sec.innerHTML = `<div class="permission-section-header"><i class="fa-solid fa-key"></i> 手动授权权限</div>
                         <div class="auth-grid" id="auth-grid-${pid}"></div>`;
                     const authGrid = document.getElementById(`auth-grid-${pid}`);
                     perms.forEach(p => {
@@ -579,7 +687,7 @@
                         card.innerHTML = `
                             <div class="auth-info">
                                 <span class="auth-name" data-explain="${p.k}"><i class="${p.icon}"></i> ${p.n}</span>
-                                <div class="auth-status" id="status-${p.k}">暂未请求</div>
+                                <div class="auth-status" id="status-${p.k}">暂未申请</div>
                             </div>
                             <button class="auth-btn" id="btn-${p.k}" data-key="${p.k}">点击授权</button>
                         `;
@@ -597,6 +705,66 @@
                 document.querySelectorAll('.auth-btn').forEach(btn => btn.addEventListener('click', function(){
                     requestPermission(this.dataset.key);
                 }));
+
+                attachCopyEvents();
+                animateCardsIn();
+            }
+
+            function attachCopyEvents() {
+                document.querySelectorAll('.card-value').forEach(el => {
+                    if (el.hasCopyEvent) return;
+                    el.hasCopyEvent = true;
+                    el.addEventListener('click', async function(e) {
+                        if (e.target.closest('button, a, .auth-btn, .card-label, .hourglass-loader, i')) return;
+                        const textToCopy = (this.innerText || '').trim();
+                        if (!textToCopy || textToCopy.includes('申请中') || textToCopy.includes('⏳')) return;
+                        try {
+                            await navigator.clipboard.writeText(textToCopy);
+                            showCopyToast(e);
+                        } catch (err) {
+                            const textarea = document.createElement('textarea');
+                            textarea.value = textToCopy;
+                            textarea.style.position = 'fixed';
+                            textarea.style.opacity = '0';
+                            document.body.appendChild(textarea);
+                            textarea.select();
+                            try { document.execCommand('copy'); showCopyToast(this,e); } catch (e2) {}
+                            document.body.removeChild(textarea);
+                        }
+                    });
+                });
+            }
+
+            function showCopyToast(element, e) {
+                const existingToast = document.querySelector('.copy-toast');
+                if (existingToast) existingToast.remove();
+                const toast = document.createElement('span');
+                toast.className = 'copy-toast';
+                toast.textContent = '已复制';
+                document.body.appendChild(toast);
+                const rect = element.getBoundingClientRect();
+                toast.style.left = (rect.right + 8) + 'px';
+                toast.style.top = (rect.top + rect.height/2 - toast.offsetHeight/2) + 'px';
+                requestAnimationFrame(() => toast.classList.add('show'));
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 200);
+                }, 1000);
+            }
+
+            function animateCardsIn() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('card-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.1, rootMargin: '0px 0px 0px 0px' });
+
+                document.querySelectorAll('.info-card, .auth-card').forEach(card => {
+                    observer.observe(card);
+                });
             }
 
             const modalOverlay = document.getElementById('modalOverlay');
@@ -633,6 +801,7 @@
                 newPage.style.display = 'block';
                 void newPage.offsetWidth;
                 newPage.classList.add('active');
+                animateCardsIn();
 
                 navTabs.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.page === pid));
                 currentPage = pid;
@@ -643,6 +812,18 @@
                 const tab = e.target.closest('.nav-tab');
                 if (tab) switchPage(tab.dataset.page);
             });
+
+            function updateScrollHint() {
+                if (!navbar || !scrollHint) return;
+                if (navbar.scrollLeft <= 1) {
+                    scrollHint.classList.remove('hidden-hint');
+                } else {
+                    scrollHint.classList.add('hidden-hint');
+                }
+            }
+            navbar.addEventListener('scroll', updateScrollHint, {passive: true});
+            window.addEventListener('resize', updateScrollHint);
+            setTimeout(updateScrollHint, 100);
 
             function formatDateTime(date) {
                 const y = date.getFullYear();
@@ -657,6 +838,11 @@
             function setVal(id, text) {
                 const el = document.getElementById('v-'+id);
                 if (el) el.innerHTML = text;
+            }
+
+            function setValError(id, msg) {
+                const el = document.getElementById('v-'+id);
+                if (el) el.innerHTML = '<i class="fa-solid fa-circle-xmark" style="color:#e53e3e;"></i> ' + msg;
             }
 
             function withTimeout(promise, ms) {
@@ -674,7 +860,7 @@
                 btn.disabled = true;
                 btn.classList.remove('granted','denied','hidden');
                 btn.textContent = '点击授权';
-                if (statusEl) statusEl.innerHTML = '<span class="hourglass-loader">⏳</span> 检测中';
+                if (statusEl) statusEl.innerHTML = '<span class="hourglass-loader">⏳</span> 申请中';
                 try {
                     const ops = {
                         'geolocation': () => new Promise((resolve, reject) => {
@@ -710,14 +896,14 @@
                     const operation = ops[key];
                     if (!operation) throw new Error('unknown');
                     await withTimeout(operation(), 5000);
-                    statusEl.textContent = '✅ 已授权';
+                    statusEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#38a169;"></i> 授权成功';
                     btn.classList.add('granted','hidden');
                 } catch (e) {
-                    let msg = '请求失败';
-                    if (e.message === 'timeout') msg = '请求超时';
-                    else if (e.message === 'unsupported' || e.message?.includes('不支持')) msg = '权限不支持';
-                    else if (e.message === 'denied' || e.name === 'NotAllowedError') msg = '授权拒绝';
-                    if (statusEl) statusEl.textContent = '❌ ' + msg;
+                    let msg = '授权失败';
+                    if (e.message === 'timeout') msg = '申请超时';
+                    else if (e.message === 'unsupported') msg = '权限不支持';
+                    else if (e.message === 'denied' || e.name === 'NotAllowedError') msg = '授权失败';
+                    statusEl.innerHTML = '<i class="fa-solid fa-circle-xmark" style="color:#e53e3e;"></i> ' + msg;
                     btn.classList.add('denied');
                 } finally {
                     btn.disabled = false;
@@ -733,39 +919,39 @@
             async function populateData() {
                 withTimeout(fetch('https://api.ipify.org?format=json'), 5000)
                     .then(r => r.json()).then(d => setVal('ip', d.ip))
-                    .catch(e => setVal('ip', e.message==='timeout'?'请求超时':'请求失败'));
+                    .catch(e => setValError('ip', e.message==='timeout'?'申请超时':'获取失败'));
                 withTimeout(fetch('https://ipapi.co/json/'), 5000)
                     .then(r => r.json()).then(d => {
-                        setVal('isp', d.org || d.asn || '请求失败');
+                        setVal('isp', d.org || d.asn || '获取失败');
                         setVal('location', (d.city||'')+', '+(d.region||'')+', '+(d.country_name||''));
                     }).catch(e => {
-                        const msg = e.message==='timeout'?'请求超时':'请求失败';
-                        setVal('isp', msg);
-                        setVal('location', msg);
+                        const msg = e.message==='timeout'?'申请超时':'获取失败';
+                        setValError('isp', msg);
+                        setValError('location', msg);
                     });
 
                 try {
                     const cv=document.createElement('canvas'); const gl=cv.getContext('webgl');
                     if(gl){ const ext=gl.getExtension('WEBGL_debug_renderer_info'); setVal('webgl', ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):'受保护'); }
                     else setVal('webgl','WebGL不可用');
-                } catch { setVal('webgl','请求失败'); }
+                } catch { setValError('webgl','获取失败'); }
                 try {
                     const c=document.createElement('canvas'); c.width=200;c.height=40;
                     const ctx=c.getContext('2d'); ctx.fillText('FP'+Date.now(),6,24);
                     setVal('canvas', simpleHash(c.toDataURL()));
-                } catch { setVal('canvas','请求失败'); }
+                } catch { setValError('canvas','获取失败'); }
                 try {
                     const actx=new (window.AudioContext||window.webkitAudioContext)();
                     setVal('audio', simpleHash(actx.sampleRate+'|'+actx.destination.maxChannelCount));
                     actx.close();
-                } catch { setVal('audio','请求失败'); }
+                } catch { setValError('audio','获取失败'); }
                 if(navigator.getBattery) {
                     withTimeout(navigator.getBattery(), 5000)
                         .then(b => setVal('battery', Math.round(b.level*100)+'% '+(b.charging?'充电中':'使用电池')))
-                        .catch(e => setVal('battery', e.message==='timeout'?'请求超时':'请求失败'));
-                } else setVal('battery','API不可用');
-                setVal('cores', navigator.hardwareConcurrency ? navigator.hardwareConcurrency+'核' : '请求失败');
-                setVal('gpu', document.getElementById('v-webgl')?.textContent || '请求失败');
+                        .catch(e => setValError('battery', e.message==='timeout'?'申请超时':'获取失败'));
+                } else setValError('battery','API不可用');
+                setVal('cores', navigator.hardwareConcurrency ? navigator.hardwareConcurrency+'核' : '获取失败');
+                setVal('gpu', document.getElementById('v-webgl')?.textContent || '获取失败');
 
                 setTimeout(() => {
                     const fonts=['Arial','微软雅黑','Consolas','Georgia','Impact','宋体','黑体','楷体','仿宋'];
@@ -779,23 +965,44 @@
                 try {
                     const pl=navigator.plugins; if(pl&&pl.length) { const names=[]; for(let i=0;i<pl.length;i++) names.push(pl[i].name); setVal('plugins', names.join(', ')); }
                     else setVal('plugins','无');
-                } catch { setVal('plugins','请求失败'); }
+                } catch { setValError('plugins','获取失败'); }
                 setVal('fingerprint', simpleHash(navigator.userAgent+'|'+screen.width+'x'+screen.height+'|'+navigator.language));
                 setVal('cookie', document.cookie ? document.cookie.split(';').length+'个' : '无');
-                try { setVal('ls', localStorage.length+'项'); } catch { setVal('ls','不可用'); }
-                try { setVal('ss', sessionStorage.length+'项'); } catch { setVal('ss','不可用'); }
+                try { setVal('ls', localStorage.length+'项'); } catch { setValError('ls','不可用'); }
+                try { setVal('ss', sessionStorage.length+'项'); } catch { setValError('ss','不可用'); }
                 setVal('idb', window.indexedDB?'可用':'不可用');
                 setVal('ref', document.referrer||'无'); setVal('hist', history.length+'条');
                 setVal('vis', document.visibilityState==='visible'?'可见':'隐藏');
                 document.addEventListener('visibilitychange', ()=>setVal('vis', document.visibilityState==='visible'?'可见':'隐藏'));
 
                 let lastAct=Date.now();
-                setInterval(()=>{ const sec=Math.floor((Date.now()-lastAct)/1000); setVal('idle', sec+'秒'+(sec>30?' (可能离开)':'')); },2000);
+                setInterval(()=>{ const sec=Math.floor((Date.now()-lastAct)/1000); setVal('idle', sec+'秒'+(sec>30?' (离开)':'')); }, 1000);
                 ['mousemove','keydown','scroll','click','touchstart'].forEach(e=>document.addEventListener(e, ()=>lastAct=Date.now(),{passive:true}));
                 const trackPanel=document.getElementById('track-panel');
                 if(trackPanel){
                     let log=[],clickC=0,scrollC=0,start=Date.now();
-                    const add=(type,detail)=>{ log.push(formatDateTime(new Date())+' '+type+': '+detail); if(log.length>10) log.shift(); trackPanel.innerHTML=log.join('<br>'); };
+                    let autoScroll = true;
+                    trackPanel.addEventListener('scroll', () => {
+                        const isAtBottom = trackPanel.scrollTop + trackPanel.clientHeight >= trackPanel.scrollHeight - 5;
+                        autoScroll = isAtBottom;
+                    });
+
+                    const add=(type,detail)=>{
+                        log.push(formatDateTime(new Date())+' '+type+': '+detail);
+                        if(log.length > 5) log.shift();
+                        trackPanel.innerHTML = '';
+                        for(let i=0; i<5; i++) {
+                            if(i < log.length) {
+                                trackPanel.innerHTML += log[i] + '<br>';
+                            } else {
+                                trackPanel.innerHTML += '&nbsp;<br>';
+                            }
+                        }
+                        if(autoScroll) {
+                            trackPanel.scrollTop = trackPanel.scrollHeight;
+                        }
+                    };
+
                     add('SESSION','开始追踪');
                     document.addEventListener('click',e=>{clickC++;add('点击',`${e.clientX},${e.clientY}`);},true);
                     document.addEventListener('wheel',()=>{scrollC++;if(scrollC%5===0) add('滚轮','累计'+scrollC);},{passive:true});
@@ -805,29 +1012,32 @@
                 updateTime(); setInterval(updateTime,1000);
 
                 const conn=navigator.connection||{};
-                setVal('rtt', conn.rtt!=null?conn.rtt+'ms':'请求失败');
-                setVal('downlink', conn.downlink!=null?conn.downlink+'Mbps':'请求失败');
-                setVal('ect', conn.effectiveType||'请求失败');
-                setVal('nettype', conn.type||'请求失败');
-                setVal('savedata', conn.saveData?'是':'否');
-                setVal('dlbw', conn.downlink!=null?conn.downlink+'Mbps':'请求失败');
+                setVal('rtt', conn.rtt!=null ? conn.rtt+'毫秒' : '获取失败');
+                setVal('downlink', conn.downlink!=null ? conn.downlink+'Mbps' : '获取失败');
+                setVal('ect', conn.effectiveType ? (conn.effectiveType === '4g' ? '4G' : conn.effectiveType) : '获取失败');
+                setVal('nettype', conn.type ? mapNetworkType(conn.type) : '获取失败');
+                setVal('savedata', conn.saveData ? '是' : '否');
+                setVal('dlbw', conn.downlink!=null ? conn.downlink+'Mbps' : '获取失败');
                 const upEl=document.getElementById('v-upspeed');
-                if(upEl){ upEl.innerHTML=''; const btn=document.createElement('button'); btn.textContent='测试上行速度'; btn.style.cssText='padding:4px 12px;border-radius:10px;font-size:0.7rem;cursor:pointer;'; btn.onclick=async function(){ btn.disabled=true; try{ const start=performance.now(); await withTimeout(fetch('https://httpbin.org/post',{method:'POST',body:new Uint8Array(200*1024)}),5000); const dur=(performance.now()-start)/1000; upEl.innerHTML='⬆️ '+(200*8/1024/dur).toFixed(1)+' Mbps'; } catch(e){ upEl.innerHTML=e.message==='timeout'?'请求超时':'请求失败'; } }; upEl.appendChild(btn); }
+                if(upEl){ upEl.innerHTML=''; const btn=document.createElement('button'); btn.textContent='测试上行速度'; btn.style.cssText='padding:4px 12px;border-radius:10px;font-size:0.7rem;cursor:pointer;'; btn.onclick=async function(){ btn.disabled=true; try{ const start=performance.now(); await withTimeout(fetch('https://httpbin.org/post',{method:'POST',body:new Uint8Array(200*1024)}),5000); const dur=(performance.now()-start)/1000; upEl.innerHTML='⬆️ '+(200*8/1024/dur).toFixed(1)+' Mbps'; } catch(e){ upEl.innerHTML=e.message==='timeout'?'申请超时':'授权失败'; } }; upEl.appendChild(btn); }
 
-                setVal('ua', navigator.userAgent); setVal('plat', navigator.platform||'请求失败');
-                const ua=navigator.userAgent; let bver='请求失败';
+                setVal('ua', navigator.userAgent); setVal('plat', navigator.platform||'获取失败');
+                const ua=navigator.userAgent; let bver='获取失败';
                 if(ua.includes('Edg/')) bver='Edge '+ua.match(/Edg\/([\d.]+)/)[1];
                 else if(ua.includes('Chrome/')&&!ua.includes('Edg')) bver='Chrome '+ua.match(/Chrome\/([\d.]+)/)[1];
                 else if(ua.includes('Firefox/')) bver='Firefox '+ua.match(/Firefox\/([\d.]+)/)[1];
                 else if(ua.includes('Safari/')&&!ua.includes('Chrome')) bver='Safari '+ua.match(/Version\/([\d.]+)/)[1];
-                setVal('bver', bver); setVal('lang', (navigator.languages||[navigator.language]).join(','));
+                setVal('bver', bver); setVal('lang', mapLanguage(navigator.language));
 
-                setVal('scr', screen.width+'×'+screen.height); setVal('dpr', devicePixelRatio.toFixed(2));
-                try{ const o=screen.orientation; setVal('orient', o?o.type+' '+o.angle+'°':'请求失败'); } catch{ setVal('orient','请求失败'); }
+                const physicalW = Math.round(screen.width * window.devicePixelRatio);
+                const physicalH = Math.round(screen.height * window.devicePixelRatio);
+                setVal('scr', physicalW+'×'+physicalH);
+                setVal('dpr', devicePixelRatio.toFixed(2));
+                try{ const o=screen.orientation; setVal('orient', o ? o.type+' '+o.angle+'°' : '获取失败'); } catch{ setValError('orient','获取失败'); }
                 setVal('colordepth', screen.colorDepth+'bit');
-                setVal('tz', Intl.DateTimeFormat().resolvedOptions().timeZone||'请求失败');
-                setVal('locale', navigator.language||'请求失败');
-                setVal('syslang', (navigator.languages||[]).join(','));
+                setVal('tz', mapTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone) || '获取失败');
+                setVal('locale', mapLanguage(navigator.language) || '获取失败');
+                setVal('syslang', (navigator.languages||[]).map(l=>mapLanguage(l)).join(','));
                 setVal('engine', navigator.userAgent.includes('AppleWebKit')?'WebKit/Blink':(navigator.userAgent.includes('Gecko')?'Gecko':'其它'));
 
                 const apiTests={ 'WebGL':()=>!!document.createElement('canvas').getContext('webgl'), 'WebRTC':()=>'mediaDevices' in navigator, 'ServiceWorker':()=>'serviceWorker' in navigator, 'IndexedDB':()=>!!window.indexedDB, 'localStorage':()=>!!window.localStorage, 'sessionStorage':()=>!!window.sessionStorage, 'Canvas':()=>!!document.createElement('canvas').getContext('2d'), 'AudioContext':()=>!!(window.AudioContext||window.webkitAudioContext) };
@@ -838,11 +1048,11 @@
                 setTimeout(()=>{
                     const navEntry=performance.getEntriesByType('navigation')[0];
                     if(navEntry){
-                        setVal('dns',(navEntry.domainLookupEnd-navEntry.domainLookupStart).toFixed(1)+'ms');
-                        setVal('tcp',(navEntry.connectEnd-navEntry.connectStart).toFixed(1)+'ms');
-                        setVal('tls',navEntry.secureConnectionStart>0?(navEntry.connectEnd-navEntry.secureConnectionStart).toFixed(1)+'ms':'0ms');
-                        setVal('nav',(navEntry.loadEventEnd-navEntry.fetchStart).toFixed(1)+'ms');
-                        setVal('domload',(navEntry.domContentLoadedEventEnd-navEntry.fetchStart).toFixed(1)+'ms');
+                        setVal('dns',((navEntry.domainLookupEnd-navEntry.domainLookupStart)/1000).toFixed(1)+'秒');
+                        setVal('tcp',((navEntry.connectEnd-navEntry.connectStart)/1000).toFixed(1)+'秒');
+                        setVal('tls',navEntry.secureConnectionStart>0?((navEntry.connectEnd-navEntry.secureConnectionStart)/1000).toFixed(1)+'秒':'0秒');
+                        setVal('nav',((navEntry.loadEventEnd-navEntry.fetchStart)/1000).toFixed(1)+'秒');
+                        setVal('domload',((navEntry.domContentLoadedEventEnd-navEntry.fetchStart)/1000).toFixed(1)+'秒');
                         setVal('trans',navEntry.transferSize>0?(navEntry.transferSize/1024).toFixed(2)+'KB':'缓存');
                         setVal('cache',navEntry.type==='navigate'?(navEntry.transferSize===0?'完全缓存':'网络加载'):navEntry.type);
                     }
