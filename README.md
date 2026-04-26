@@ -61,8 +61,31 @@
 
 - HTML5 + CSS3
 - 原生 JavaScript
-- [Font Awesome](https://fontawesome.com/) 图标
 - 浏览器 API：WebGL、Canvas、AudioContext、Battery Status、Performance、Navigator、Screen、Intl、Clipboard、MediaDevices、Bluetooth、USB、Serial、HID 等
+
+## 🔗源码
+- 👉 [前往下载](https://github.com/lxj13533251583/WT-Permisson/releases/)
+
+## 📝 更新日志
+
+- [ChangeLog](https://lxj13533251583.github.io/WT-Permission/changelog.html)
+
+## ⚠️ 声明
+
+1. **项目性质**：本项目为个人技术练习与作品展示，非商业用途，不代表任何官方立场。
+2. **版权与许可**：
+   - **代码**：本项目代码采用 **[MIT License](https://opensource.org/licenses/MIT)** 开源。
+   - **图标**：图标为原创，未经允许禁止商用；如需个人使用请告知作者。
+3. **责任限制**：作者不对因使用本项目代码或访问网站内容导致的任何损失承担责任。
+4. **隐私说明**：
+   - 本网站为纯静态页面，不收集任何用户隐私数据，所有设置仅保存在浏览器本地。
+   - 所有检测均在本机浏览器完成，除公网IP查询需调用公开API外，不会将任何数据发送到外部服务器。不建议在本站内**截图**或公开访问，以免泄露隐私。
+
+## 🙏 特别鸣谢
+
+- [GitHub](https://github.com) 提供仓库与 Pages 托管服务
+- https://chat.deepseek.com 提供技术建议与代码优化
+- [Font Awesome](https://fontawesome.com) 提供高质量图标库
 
 ---
 
