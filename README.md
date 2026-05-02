@@ -1,36 +1,36 @@
-# <img src="https://lxj13533251583.github.io/WT-Permission/avatar.jpg" width="25" align="center"> WT权限站
+# <img src="https://ldy2330785100.github.io/WT-Permission/avatar.jpg" width="25" align="center"> WT权限站
 
 一个完全运行在浏览器端的**隐私权限检测工具**，帮助用户了解网站在不经授权或主动授权的情况下，能够获取到哪些设备与网络信息。
 
 <div>
-  <a href="https://github.com/lxj13533251583/WT-Permission">
+  <a href="https://github.com/ldy2330785100/WT-Permission">
     <img src="https://img.shields.io/badge/website-live-brightgreen" alt="Website">
   </a>
   <br>
-  <a href="https://github.com/lxj13533251583/WT-Permission/stargazers">
-    <img src="https://img.shields.io/github/stars/lxj13533251583/WT-Permission" alt="GitHub stars">
+  <a href="https://github.com/ldy2330785100/WT-Permission/stargazers">
+    <img src="https://img.shields.io/github/stars/ldy2330785100/WT-Permission" alt="GitHub stars">
   </a>
-  <a href="https://github.com/lxj13533251583/WT-Permission/commits/main">
-    <img src="https://img.shields.io/github/last-commit/lxj13533251583/WT-Permission" alt="GitHub last commit">
+  <a href="https://github.com/ldy2330785100/WT-Permission/commits/main">
+    <img src="https://img.shields.io/github/last-commit/ldy2330785100/WT-Permission" alt="GitHub last commit">
   </a>
-  <a href="https://github.com/lxj13533251583/WT-Permission/releases">
-    <img src="https://img.shields.io/github/v/release/lxj13533251583/WT-Permission" alt="GitHub release">
+  <a href="https://github.com/ldy2330785100/WT-Permission/releases">
+    <img src="https://img.shields.io/github/v/release/ldy2330785100/WT-Permission" alt="GitHub release">
   </a>
-  <a href="https://github.com/lxj13533251583/WT-Permission/releases">
-    <img src="https://img.shields.io/github/release-date/lxj13533251583/WT-Permission" alt="Release date">
+  <a href="https://github.com/ldy2330785100/WT-Permission/releases">
+    <img src="https://img.shields.io/github/release-date/ldy2330785100/WT-Permission" alt="Release date">
   </a>
-  <a href="https://github.com/lxj13533251583/WT-Permission">
-    <img src="https://img.shields.io/github/repo-size/lxj13533251583/WT-Permission" alt="Repo size">
+  <a href="https://github.com/ldy2330785100/WT-Permission">
+    <img src="https://img.shields.io/github/repo-size/ldy2330785100/WT-Permission" alt="Repo size">
   </a>
-  <a href="https://github.com/lxj13533251583/WT-Permission/commits/main">
-    <img src="https://img.shields.io/github/commit-activity/m/lxj13533251583/WT-Permission" alt="Commit activity">
+  <a href="https://github.com/ldy2330785100/WT-Permission/commits/main">
+    <img src="https://img.shields.io/github/commit-activity/m/ldy2330785100/WT-Permission" alt="Commit activity">
   </a>
-  <a href="https://github.com/lxj13533251583/WT-Permission">
+  <a href="https://github.com/ldy2330785100/WT-Permission">
     <img src="https://img.shields.io/badge/Maintenance-Active-brightgreen" alt="Maintenance">
   </a>
 </div>
 
-🌐 **在线体验**：[点击跳转](https://lxj13533251583.github.io/WT-Permission/)
+🌐 **在线体验**：[点击跳转](https://ldy2330785100.github.io/WT-Permission/)
 
 ## 📌 功能总览
 
@@ -73,11 +73,11 @@
   - `fetch`、`WebGL`、`Canvas 2D`、`AudioContext`、`Battery Status`、`Performance`、`Navigator`、`Screen`、`Intl`、`Clipboard`、`MediaDevices`、`Bluetooth`、`USB`、`Serial`、`HID` 等
 
 ## 🔗源码
-- [前往下载](https://github.com/lxj13533251583/WT-Permisson/releases/)
+- [前往下载](https://github.com/ldy2330785100/WT-Permisson/releases/)
 
 ## 📝 更新日志
 
-- [ChangeLog](https://lxj13533251583.github.io/WT-Permission/changelog.html)
+- [ChangeLog](https://ldy2330785100.github.io/WT-Permission/changelog.html)
 
 ## ⚠️ 声明
 
