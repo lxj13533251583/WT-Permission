@@ -243,6 +243,7 @@
             display:flex;
             align-items:center;
             gap:6px;
+            flex-wrap: wrap;
         }
         .card-value .copy-target {
             cursor: pointer;
@@ -330,6 +331,19 @@
             .auth-btn.denied { background:#3a1a1a; color:#fca5a5; }
         }
 
+        .mic-visualizer {
+            width: 100%;
+            height: 30px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+            margin-top: 6px;
+        }
+        @media (prefers-color-scheme: dark) {
+            .mic-visualizer {
+                background: rgba(255,255,255,0.05);
+            }
+        }
+
         button, .btn, .repo-link-btn, .auth-btn {
             transition: transform 0.1s ease, background-color 0.2s var(--spring-easing), border-color 0.2s var(--spring-easing);
         }
@@ -402,7 +416,7 @@
 </head>
 <body>
     <header class="site-header">
-        <h1><i class="fa-solid fa-shield-halved"></i> WT权限站</h1>
+        <h1><img src="avatar.jpg" alt="" style="width:28px; height:28px; border-radius:6px; vertical-align: middle; margin-right:4px;"> WT权限站</h1>
         <p class="subtitle">一个测试可以获取到用户的权限的网站</p>
         <div class="disclaimer">
             ⚠️ 所有检测均在本机浏览器完成，除公网IP查询需调用公开API外，不会将任何数据发送到外部服务器。权限信息仅供参考，不担负法律责任。不建议在本站内<strong>截图</strong>或公开访问，以免泄露隐私。
@@ -447,6 +461,76 @@
             const pageWrapper = document.getElementById('pageWrapper');
             const navbar = document.getElementById('navbar');
             const scrollHint = document.getElementById('scrollHint');
+
+            let micStream = null;
+            let micAudioContext = null;
+            let micAnalyser = null;
+            let micAnimationId = null;
+            let micCanvas = null;
+
+        function stopMicVisualizer() {
+            if (micAnimationId) cancelAnimationFrame(micAnimationId);
+            if (micAudioContext) micAudioContext.close();
+            if (micStream) micStream.getTracks().forEach(t => t.stop());
+            micStream = null;
+            micAudioContext = null;
+            micAnalyser = null;
+            micAnimationId = null;
+            if (micCanvas) {
+                micCanvas.remove();
+                micCanvas = null;
+                }
+            }
+
+            function startMicVisualizer(stream) {
+                stopMicVisualizer();
+                micStream = stream;
+                micAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                micAnalyser = micAudioContext.createAnalyser();
+                micAnalyser.fftSize = 64;
+                const source = micAudioContext.createMediaStreamSource(stream);
+                source.connect(micAnalyser);
+                const statusEl = document.getElementById('status-microphone');
+                if (!statusEl) return;
+                micCanvas = document.createElement('canvas');
+                micCanvas.className = 'mic-visualizer';
+                micCanvas.width = 200;
+                micCanvas.height = 30;
+                statusEl.parentNode.appendChild(micCanvas);
+                const ctx = micCanvas.getContext('2d');
+                const bufferLength = micAnalyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+
+            function draw() {
+                micAnimationId = requestAnimationFrame(draw);
+                micAnalyser.getByteFrequencyData(dataArray);
+                ctx.clearRect(0, 0, micCanvas.width, micCanvas.height);
+
+                const totalLines = bufferLength;
+                const lineThickness = 5;
+                const spacing = Math.max(0, (micCanvas.height - totalLines * lineThickness) / (totalLines - 1)); // 动态间距
+                let y = 0;
+
+                for (let i = 0; i < totalLines; i++) {
+                    const rawValue = dataArray[i] / 255;  // 0 ~ 1
+                    const width = Math.max(2, micCanvas.width * rawValue); // 最小宽度保证可见
+
+                    let color;
+                    if (rawValue < 0.5) {
+                        const t = rawValue / 0.5;
+                        color = `rgb(${Math.floor(255 * t)}, ${255}, 0)`;  // 绿→黄
+                    } else {
+                        const t = (rawValue - 0.5) / 0.5;
+                        color = `rgb(255, ${Math.floor(255 * (1 - t))}, 0)`; // 黄→红
+                    }
+
+                    ctx.fillStyle = color;
+                    ctx.fillRect(0, y, width, lineThickness);
+                    y += lineThickness + spacing;          // 移动到下一条线
+                    }
+                }
+                draw();
+            }
 
             const timezoneMap = {
                 'Asia/Shanghai': '亚洲/上海',
@@ -547,7 +631,18 @@
                 'network-info': '网络详情：读取更详细的网络状态如信号强度，进一步剖析你的上网环境，增加隐私暴露。',
                 'motion-sensors': '运动传感器：获取加速度计、陀螺仪等数据，可用于分析你的运动姿态甚至步态，可能被用于行为识别。',
                 'vibration': '震动：允许网页让你的手机或手柄震动作为反馈，一般无害，但可能被用于交互追踪的辅助。',
-                'window-management': '多屏幕管理：允许网页检测你连接了几个显示器及它们的布局，可能暴露你的工作环境或多屏习惯。'
+                'window-management': '多屏幕管理：允许网页检测你连接了几个显示器及它们的布局，可能暴露你的工作环境或多屏习惯。',
+                'midi': 'MIDI：允许网站访问你的MIDI音乐设备（如键盘、合成器），获取音乐数据和控制外设。',
+                'idle-detection': '空闲检测：允许网站检测你多久没有操作设备，甚至感知你是否离开，观察你的工作状态。',
+                'wake-lock': '唤醒锁：允许网站阻止屏幕关闭或设备休眠，常用于视频播放或导航场景。',
+                'storage-access': '存储访问：允许网站请求访问第三方Cookie存储，用来登录或跨站跟踪。',
+                'local-fonts': '本地字体：允许网站查询你系统上安装的全部字体，准确识别你的设备，极其隐私。',
+                'web-share': '网页分享：允许网站调用系统分享对话框，分享文本、链接、文件等，可能泄露你选中的内容。',
+                'ambient-light': '环境光传感器：允许网站获取环境光强度，用于自适应亮度，也可判断使用环境。',
+                'screen-orientation': '屏幕方向锁：允许网站强制屏幕旋转或锁定方向，可能干扰用户习惯。',
+                'xr': '虚拟现实/增强现实：允许网站进入沉浸式VR/AR体验，获取空间追踪数据，可用于识别物理环境。',
+                'pointer-lock': '指针锁定：允许网站捕获鼠标并隐藏指针，常用于游戏，可监控你的鼠标移动。',
+                'enumerate-devices': '设备枚举：允许网站列出所有音视频输入输出设备，暴露你的硬件配置。'
             };
 
             const cardData = {
@@ -629,20 +724,31 @@
                     {k:'microphone', n:'麦克风', icon:'fa-solid fa-microphone'},
                     {k:'display-capture', n:'屏幕录制/共享', icon:'fa-solid fa-desktop'},
                     {k:'bluetooth', n:'蓝牙', icon:'fa-brands fa-bluetooth'},
-                    {k:'usb', n:'USB', icon:'fa-brands fa-usb'}
+                    {k:'usb', n:'USB', icon:'fa-brands fa-usb'},
+                    {k:'midi', n:'MIDI', icon:'fa-solid fa-music'},
+                    {k:'idle-detection', n:'空闲检测', icon:'fa-solid fa-user-clock'},
+                    {k:'wake-lock', n:'唤醒锁', icon:'fa-solid fa-lock-open'}
                 ],
                 low: [
                     {k:'serial', n:'串口', icon:'fa-solid fa-terminal'},
                     {k:'hid', n:'外设键鼠/手柄', icon:'fa-solid fa-gamepad'},
                     {k:'file-handles', n:'本地文件', icon:'fa-solid fa-folder-open'},
                     {k:'persistent-storage', n:'永久存储', icon:'fa-solid fa-save'},
-                    {k:'background-sync', n:'后台同步', icon:'fa-solid fa-sync'}
+                    {k:'background-sync', n:'后台同步', icon:'fa-solid fa-sync'},
+                    {k:'storage-access', n:'存储访问', icon:'fa-solid fa-database'},
+                    {k:'local-fonts', n:'本地字体', icon:'fa-solid fa-font'},
+                    {k:'web-share', n:'网页分享', icon:'fa-solid fa-share-alt'},
+                    {k:'ambient-light', n:'环境光', icon:'fa-solid fa-sun'}
                 ],
                 minimal: [
                     {k:'network-info', n:'网络详情', icon:'fa-solid fa-signal'},
                     {k:'motion-sensors', n:'运动传感器', icon:'fa-solid fa-running'},
                     {k:'vibration', n:'设备震动', icon:'fa-solid fa-mobile'},
-                    {k:'window-management', n:'多屏幕管理', icon:'fa-solid fa-window-restore'}
+                    {k:'window-management', n:'多屏幕管理', icon:'fa-solid fa-window-restore'},
+                    {k:'screen-orientation', n:'屏幕方向锁', icon:'fa-solid fa-mobile-alt'},
+                    {k:'xr', n:'VR/AR', icon:'fa-solid fa-vr-cardboard'},
+                    {k:'pointer-lock', n:'指针锁定', icon:'fa-solid fa-mouse-pointer'},
+                    {k:'enumerate-devices', n:'设备枚举', icon:'fa-solid fa-list-ul'}
                 ]
             };
 
@@ -872,7 +978,10 @@
                             navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
                         }),
                         'camera': () => navigator.mediaDevices.getUserMedia({video:true}),
-                        'microphone': () => navigator.mediaDevices.getUserMedia({audio:true}),
+                        'microphone': async () => {
+                            const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+                            startMicVisualizer(stream);
+                        },
                         'notifications': () => Notification.requestPermission(),
                         'clipboard-read': () => navigator.clipboard.readText(),
                         'clipboard-write': () => navigator.clipboard.writeText('test'),
@@ -896,14 +1005,66 @@
                         'window-management': async () => {
                             if (!('getScreenDetails' in window)) throw new Error('unsupported');
                             await window.getScreenDetails();
+                        },
+                        'midi': async () => {
+                            if (!navigator.requestMIDIAccess) throw new Error('unsupported');
+                            await navigator.requestMIDIAccess();
+                        },
+                        'idle-detection': async () => {
+                            if (!('IdleDetector' in window)) throw new Error('unsupported');
+                            const detector = new IdleDetector();
+                            await detector.start();
+                        },
+                        'wake-lock': async () => {
+                            if (!('WakeLock' in navigator)) throw new Error('unsupported');
+                            await navigator.wakeLock.request('screen');
+                        },
+                        'storage-access': async () => {
+                            if (!document.requestStorageAccess) throw new Error('unsupported');
+                            await document.requestStorageAccess();
+                        },
+                        'local-fonts': async () => {
+                            if (!('queryLocalFonts' in window)) throw new Error('unsupported');
+                            await window.queryLocalFonts();
+                        },
+                        'web-share': async () => {
+                            if (!navigator.share) throw new Error('unsupported');
+                            await navigator.share({title:'WT权限站', text:'测试分享', url:window.location.href});
+                        },
+                        'ambient-light': async () => {
+                            if (!('AmbientLightSensor' in window)) throw new Error('unsupported');
+                            const sensor = new AmbientLightSensor();
+                            sensor.start();
+                        },
+                        'screen-orientation': async () => {
+                            if (!screen.orientation || !screen.orientation.lock) throw new Error('unsupported');
+                            await screen.orientation.lock('any');
+                        },
+                        'xr': async () => {
+                            if (!navigator.xr) throw new Error('unsupported');
+                            const session = await navigator.xr.requestSession('immersive-vr');
+                        },
+                        'pointer-lock': async () => {
+                            const body = document.body;
+                            if (!body.requestPointerLock) throw new Error('unsupported');
+                            body.requestPointerLock();
+                        },
+                        'enumerate-devices': async () => {
+                            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) throw new Error('unsupported');
+                            await navigator.mediaDevices.enumerateDevices();
                         }
                     };
                     const operation = ops[key];
                     if (!operation) throw new Error('unknown');
                     await withTimeout(operation(), 5000);
-                    statusEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#38a169;"></i> 授权成功';
+                    if (key === 'microphone') {
+                        statusEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#38a169;"></i> 授权成功 (可视化已开启)';
+                    } else {
+                        statusEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#38a169;"></i> 授权成功';
+                    }
                     btn.classList.add('granted','hidden');
                 } catch (e) {
+                    if (key === 'microphone') stopMicVisualizer();
                     let msg = '授权失败';
                     if (e.message === 'timeout') msg = '申请超时';
                     else if (e.message === 'unsupported') msg = '权限不支持';
@@ -1247,10 +1408,52 @@
                     else setVal('plugins','无');
                 } catch { setValError('plugins','获取失败'); }
                 setVal('fingerprint', simpleHash(navigator.userAgent+'|'+screen.width+'x'+screen.height+'|'+navigator.language));
-                setVal('cookie', document.cookie ? document.cookie.split(';').length+'个' : '无');
-                try { setVal('ls', localStorage.length+'项'); } catch { setValError('ls','不可用'); }
-                try { setVal('ss', sessionStorage.length+'项'); } catch { setValError('ss','不可用'); }
-                setVal('idb', window.indexedDB?'可用':'不可用');
+                if (document.cookie) {
+                  const cookies = document.cookie.split(';').map(c => c.trim().split('=')[0]);
+                  setVal('cookie', cookies.length + '个：' + cookies.join(', '));
+                } else {
+                  setVal('cookie', '无');
+                }
+                try {
+                  const keys = [];
+                  for (let i = 0; i < localStorage.length; i++) {
+                    keys.push(localStorage.key(i));
+                  }
+                  const displayKeys = keys.slice(0, 6);
+                  let text = keys.length + '项';
+                  if (displayKeys.length > 0) {
+                    text += '：' + displayKeys.join(', ');
+                    if (keys.length > 6) text += '...';
+                  }
+                  setVal('ls', text);
+                } catch { setValError('ls', '不可用'); }
+                try {
+                    const keys = [];
+                    for (let i = 0; i < sessionStorage.length; i++) {
+                        keys.push(sessionStorage.key(i));
+                    }
+                    const displayKeys = keys.slice(0, 6);
+                    let text = keys.length + '项';
+                    if (displayKeys.length > 0) {
+                        text += '：' + displayKeys.join(', ');
+                        if (keys.length > 6) text += '...';
+                    }
+                    setVal('ss', text);
+                } catch { setValError('ss', '不可用'); }
+                if (window.indexedDB) {
+                    if (indexedDB.databases) {
+                        indexedDB.databases().then(dbs => {
+                            const names = dbs.map(db => db.name);
+                            let text = names.length + '个数据库';
+                            if (names.length > 0) text += '：' + names.join(', ');
+                            setVal('idb', text);
+                        }).catch(() => setVal('idb', '获取失败'));
+                    } else {
+                        setVal('idb', '可用（无法列出数据库）');
+                    }
+                } else {
+                    setValError('idb', '不可用');
+                }
                 setVal('ref', document.referrer||'无'); setVal('hist', history.length+'条');
                 setVal('vis', document.visibilityState==='visible'?'可见':'隐藏');
                 document.addEventListener('visibilitychange', ()=>setVal('vis', document.visibilityState==='visible'?'可见':'隐藏'));
